@@ -50,7 +50,6 @@
         .typing-char.done { color: #9ca3af; }
         .typing-char.waiting { color: #000; }
         
-        /* Hiệu ứng báo lỗi gõ sai */
         .typing-char.error {
             border-color: #ef4444; color: #ef4444; background-color: #fee2e2;
             animation: shake 0.3s ease-in-out;
@@ -59,6 +58,15 @@
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-4px); }
             40%, 80% { transform: translateX(4px); }
+        }
+        
+        /* Hiệu ứng nhấp nháy cho thông báo nhắc nhập tên */
+        .animate-bounce-alert {
+            animation: bounceAlert 1s infinite;
+        }
+        @keyframes bounceAlert {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -10px); }
         }
     </style>
 </head>
@@ -86,50 +94,50 @@
             { id: 4, title: "Bài 4: Tổng hợp", text: "a q z s w x d e c f r v" }
         ];
 
-        // COMPONENT BÀN TAY (Đã phóng to & Thêm chức năng đổi màu ngón)
+        // COMPONENT BÀN TAY (Đã phóng to, ngón tay dài hơn, có đổi màu)
         const CuteHand = ({ isLeft, expectedFingerName }) => {
             const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
 
-            // Hàm xác định màu sắc cho từng ngón tay
             const getFill = (fingerName) => {
                 const fullTargetName = `${fingerName} tay ${isLeft ? 'trái' : 'phải'}`;
-                
                 if (expectedFingerName === fullTargetName) {
                     if (fingerName === 'Ngón út') return '#ffa94d';     // Cam
                     if (fingerName === 'Ngón áp út') return '#ffd43b';  // Vàng
                     if (fingerName === 'Ngón giữa') return '#74c0fc';   // Xanh dương
                     if (fingerName === 'Ngón trỏ') return '#69db7c';    // Xanh lá
                 }
-                // Phím Space (Ngón cái)
                 if (expectedFingerName === 'Ngón cái' && fingerName === 'Ngón cái') return '#ffd43b';
-                
-                return '#fed7aa'; // Màu da mặc định
+                return '#fed7aa'; 
             };
 
             return (
-                <svg width="170" height="200" viewBox="0 0 100 120" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
-                    <rect x="25" y="90" width="50" height="20" rx="5" fill={cuffColor} stroke="#1e293b" strokeWidth="3"/>
+                // Phóng to kích thước từ width=170 lên 200, height lên 240
+                <svg width="200" height="240" viewBox="0 0 100 135" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
+                    {/* Tay áo */}
+                    <rect x="25" y="110" width="50" height="20" rx="5" fill={cuffColor} stroke="#1e293b" strokeWidth="3"/>
                     
-                    {/* Các ngón tay tự động đổi màu */}
-                    <rect x="20" y="30" width="14" height="35" rx="7" fill={getFill('Ngón út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
-                    <rect x="36" y="15" width="14" height="45" rx="7" fill={getFill('Ngón áp út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
-                    <rect x="52" y="10" width="14" height="50" rx="7" fill={getFill('Ngón giữa')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
-                    <rect x="68" y="20" width="14" height="45" rx="7" fill={getFill('Ngón trỏ')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    {/* Các ngón tay được kéo dài hơn nhiều so với lòng bàn tay */}
+                    <rect x="20" y="40" width="14" height="40" rx="7" fill={getFill('Ngón út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="36" y="20" width="14" height="60" rx="7" fill={getFill('Ngón áp út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="52" y="10" width="14" height="70" rx="7" fill={getFill('Ngón giữa')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="68" y="30" width="14" height="50" rx="7" fill={getFill('Ngón trỏ')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
                     
-                    <rect x="18" y="45" width="66" height="50" rx="15" fill="#fed7aa" stroke="#1e293b" strokeWidth="3"/>
+                    {/* Lòng bàn tay lùi xuống dưới */}
+                    <rect x="18" y="65" width="66" height="50" rx="15" fill="#fed7aa" stroke="#1e293b" strokeWidth="3"/>
                     
                     {/* Ngón cái */}
-                    <path d="M 82 55 Q 98 55 95 70 Q 92 80 80 75" fill={getFill('Ngón cái')} stroke="#1e293b" strokeWidth="3" strokeLinecap="round" style={{transition: 'fill 0.2s'}}/>
+                    <path d="M 82 75 Q 98 75 95 90 Q 92 100 80 95" fill={getFill('Ngón cái')} stroke="#1e293b" strokeWidth="3" strokeLinecap="round" style={{transition: 'fill 0.2s'}}/>
                     
-                    <rect x="21" y="46" width="60" height="46" rx="10" fill="#fed7aa" />
-                    <path d="M 80 57 Q 94 57 92 68 Q 90 76 80 72" fill={getFill('Ngón cái')} style={{transition: 'fill 0.2s'}}/>
+                    {/* Xóa viền thừa bên trong lòng bàn tay */}
+                    <rect x="21" y="66" width="60" height="46" rx="10" fill="#fed7aa" />
+                    <path d="M 80 77 Q 94 77 92 88 Q 90 96 80 92" fill={getFill('Ngón cái')} style={{transition: 'fill 0.2s'}}/>
 
-                    {/* Mặt */}
-                    <circle cx="38" cy="70" r="3" fill="#1e293b"/>
-                    <circle cx="62" cy="70" r="3" fill="#1e293b"/>
-                    <path d="M 45 75 Q 50 80 55 75" stroke="#1e293b" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-                    <circle cx="30" cy="74" r="4" fill="#fca5a5" opacity="0.8"/>
-                    <circle cx="70" cy="74" r="4" fill="#fca5a5" opacity="0.8"/>
+                    {/* Khuôn mặt */}
+                    <circle cx="38" cy="90" r="3" fill="#1e293b"/>
+                    <circle cx="62" cy="90" r="3" fill="#1e293b"/>
+                    <path d="M 45 95 Q 50 100 55 95" stroke="#1e293b" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                    <circle cx="30" cy="94" r="4" fill="#fca5a5" opacity="0.8"/>
+                    <circle cx="70" cy="94" r="4" fill="#fca5a5" opacity="0.8"/>
                 </svg>
             );
         };
@@ -190,6 +198,9 @@
 
         function App() {
             const [playerName, setPlayerName] = React.useState("");
+            const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); // Xác nhận đã nhập tên
+            const [showNameAlert, setShowNameAlert] = React.useState(false);     // Bật thông báo đỏ
+
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentIndex, setCurrentIndex] = React.useState(0);
             const [errors, setErrors] = React.useState(0);
@@ -200,8 +211,6 @@
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             const [activeKey, setActiveKey] = React.useState(null); 
             const [accuracy, setAccuracy] = React.useState(100);
-            
-            // Biến trạng thái để báo lỗi đỏ
             const [hasError, setHasError] = React.useState(false); 
 
             React.useEffect(() => {
@@ -216,34 +225,37 @@
                 const handleKeyDown = (e) => {
                     if (document.activeElement.tagName === 'INPUT') return;
                     
-                    const keyChar = e.key;
-                    setActiveKey(keyChar.toLowerCase());
-
                     if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
                     if (isFinished) return;
+
+                    // Yêu cầu học sinh phải nhập tên và nhấn Enter mới được gõ
+                    if (!isNameConfirmed || playerName.trim() === "") {
+                        setShowNameAlert(true);
+                        setTimeout(() => setShowNameAlert(false), 3500); // Ẩn cảnh báo sau 3.5 giây
+                        return;
+                    }
+
+                    const keyChar = e.key;
+                    setActiveKey(keyChar.toLowerCase());
 
                     const expectedChar = lesson.text[currentIndex];
                     if (currentIndex === 0 && !startTime) setStartTime(Date.now());
 
                     if (keyChar === expectedChar) {
-                        setHasError(false); // Xóa trạng thái lỗi khi gõ đúng
+                        setHasError(false); 
                         if (currentIndex + 1 === lesson.text.length) {
                             setIsFinished(true);
                             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
                             const finalAcc = Math.max(0, 100 - (errors * 5));
                             
-                            if (playerName.trim() !== "") {
-                                db.collection("stats").add({
-                                    playerName, lessonTitle: lesson.title, errors, accuracy: finalAcc, timeTaken,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                            setTimeout(() => setShowStats(true), 1000);
+                            db.collection("stats").add({
+                                playerName, lessonTitle: lesson.title, errors, accuracy: finalAcc, timeTaken,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
                         } else {
                             setCurrentIndex(currentIndex + 1);
                         }
                     } else {
-                        // Kích hoạt màu đỏ khi gõ sai
                         setHasError(true);
                         const newErrors = errors + 1;
                         setErrors(newErrors);
@@ -258,18 +270,35 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed]);
 
+            // Xử lý khi nhập tên xong và nhấn Enter
             const handleNameKeyDown = (e) => {
                 if (e.key === 'Enter') {
                     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                     e.preventDefault();
-                    e.target.blur();
+                    if (playerName.trim() !== "") {
+                        setIsNameConfirmed(true);
+                        setShowNameAlert(false); // Tắt thông báo nếu đang có
+                        e.target.blur();         // Sẵn sàng gõ
+                    } else {
+                        setShowNameAlert(true);
+                    }
                 }
             };
 
             const resetLesson = () => {
                 setCurrentIndex(0); setErrors(0); setAccuracy(100); setStartTime(null); setIsFinished(false); setShowStats(false); setHasError(false);
+            };
+
+            const handleNextLesson = () => {
+                const currentIdx = lessons.findIndex(l => l.id === lesson.id);
+                if (currentIdx < lessons.length - 1) {
+                    setLesson(lessons[currentIdx + 1]);
+                } else {
+                    setLesson(lessons[0]); // Nếu hết bài thì quay về bài 1
+                }
+                resetLesson();
             };
 
             const formatTime = (seconds) => {
@@ -287,18 +316,31 @@
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
 
             return (
-                <div className="flex flex-col h-screen overflow-hidden">
+                <div className="flex flex-col h-screen overflow-hidden relative">
+                    
+                    {/* Bảng thông báo yêu cầu nhập tên (Nổi lên giữa màn hình) */}
+                    {showNameAlert && (
+                        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700">
+                            ⚠️ Cảnh báo: Em hãy nhập tên và NHẤN PHÍM ENTER để xác nhận trước khi gõ nhé!
+                        </div>
+                    )}
+
                     <div className="bg-[#202124] text-white p-2 flex justify-between items-center shadow-md z-20 h-14">
                         <div className="flex items-center gap-4 h-full">
                             <div className="font-bold text-lg ml-2 flex items-center gap-2">
                                 ⏳ TypingPractice
                             </div>
-                            <div className="bg-white rounded px-2 py-1 flex items-center h-8">
+                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')}`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
                                     type="text" placeholder="Nhập tên của em..." 
-                                    value={playerName} onChange={(e) => setPlayerName(e.target.value)} onKeyDown={handleNameKeyDown}
-                                    className="text-black outline-none border-none bg-transparent w-40 text-sm"
+                                    value={playerName} 
+                                    onChange={(e) => {
+                                        setPlayerName(e.target.value);
+                                        setIsNameConfirmed(false); // Đổi tên thì phải Enter lại
+                                    }} 
+                                    onKeyDown={handleNameKeyDown}
+                                    className="text-black outline-none border-none bg-transparent w-40 text-sm font-bold"
                                 />
                             </div>
                         </div>
@@ -324,20 +366,25 @@
 
                         <div className="z-10 mt-10">
                             {isFinished ? (
-                                <div className="bg-white p-6 rounded-xl shadow-xl text-2xl font-bold text-green-600 cursor-pointer hover:scale-105 transition" onClick={resetLesson}>
-                                    🎉 Chúc mừng em đã hoàn thành! Bấm để gõ lại 🔄
+                                <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6">
+                                    <h2 className="text-3xl font-bold text-green-600">🎉 Tuyệt vời! Em đã hoàn thành bài tập!</h2>
+                                    <div className="flex gap-4">
+                                        <button onClick={resetLesson} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
+                                            🔄 Gõ lại bài này
+                                        </button>
+                                        <button onClick={handleNextLesson} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
+                                            ⏭️ Bài tiếp theo
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="text-6xl font-mono tracking-[0.2em] flex flex-wrap justify-center px-10">
                                     {lesson.text.split('').map((char, index) => {
                                         let statusClass = "waiting";
                                         if (index < currentIndex) statusClass = "done";
-                                        
-                                        // Gán class báo lỗi nếu đang ở ký tự hiện tại mà gõ sai
                                         if (index === currentIndex) {
                                             statusClass = hasError ? "current error" : "current";
                                         }
-                                        
                                         return (
                                             <span key={index} className={`typing-char ${statusClass}`}>
                                                 {char === ' ' ? ' ' : char}
@@ -357,8 +404,8 @@
                     )}
 
                     <div className="bg-[#e5e7eb] pb-6 pt-4 flex justify-center z-20 relative border-t border-gray-300">
-                        {/* Tay trái */}
-                        <div className="absolute left-6 bottom-0 z-30 pointer-events-none">
+                        {/* Bàn tay trái - Được đưa vào gần sát bàn phím hơn */}
+                        <div className="absolute left-[5%] md:left-[10%] lg:left-[18%] bottom-0 z-30 pointer-events-none">
                             <CuteHand isLeft={true} expectedFingerName={fingerInfo?.name} />
                         </div>
 
@@ -377,12 +424,13 @@
                             ))}
                         </div>
 
-                        {/* Tay phải */}
-                        <div className="absolute right-6 bottom-0 z-30 pointer-events-none">
+                        {/* Bàn tay phải - Được đưa vào gần sát bàn phím hơn */}
+                        <div className="absolute right-[5%] md:right-[10%] lg:right-[18%] bottom-0 z-30 pointer-events-none">
                             <CuteHand isLeft={false} expectedFingerName={fingerInfo?.name} />
                         </div>
                     </div>
 
+                    {/* Modal Thống kê - Giữ nguyên không đổi */}
                     {showStats && (
                         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
                             <div className="bg-white rounded-xl shadow-2xl w-3/4 max-w-4xl flex flex-col max-h-[80vh] overflow-hidden border-2 border-green-500">
