@@ -41,4 +41,24 @@
             to { transform: scale(1.25); box-shadow: 0 0 25px rgba(239, 68, 68, 1); }
         }
 
-        .c-orange { background
+        .c-orange { background-color: #ffa94d; } 
+        .c-yellow { background-color: #ffd43b; } 
+        .c-blue { background-color: #74c0fc; }   
+        .c-green { background-color: #69db7c; }  
+        .c-dark { background-color: #495057; color: white; } 
+
+        .bubble {
+            position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%;
+            animation: float 4s infinite ease-in;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+
+        .typing-char {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 40px; height: 60px; margin: 0 2px; transition: all 0.1s;
+        }
+        .typing-char.current { border: 3px solid #1e293b; border-radius: 4px; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
+        .typing
