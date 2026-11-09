@@ -18,4 +18,96 @@
         .key {
             display: inline-flex; justify-content: center; align-items: center;
             border-radius: 6px; font-weight: bold; font-size: 0.9rem; color: #333;
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2); transition:
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2); transition: all 0.05s;
+            margin: 2px; user-select: none; border: 1px solid rgba(0,0,0,0.1);
+        }
+        .key:active, .key.active-typing {
+            transform: translateY(4px); box-shadow: 0 0px 0 rgba(0, 0, 0, 0.2); filter: brightness(0.9);
+        }
+        .key.target-key {
+            background-color: #ffffff !important; border: 4px solid #ef4444 !important; 
+            color: #ef4444 !important; transform: scale(1.15); 
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); z-index: 50;
+            animation: pulseTarget 0.5s infinite alternate;
+        }
+        @keyframes pulseTarget {
+            from { transform: scale(1.1); }
+            to { transform: scale(1.25); box-shadow: 0 0 25px rgba(239, 68, 68, 1); }
+        }
+        .c-orange { background-color: #ffa94d; } 
+        .c-yellow { background-color: #ffd43b; } 
+        .c-blue { background-color: #74c0fc; }   
+        .c-green { background-color: #69db7c; }  
+        .c-dark { background-color: #495057; color: white; } 
+        .bubble {
+            position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%;
+            animation: float 4s infinite ease-in;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+        .typing-char {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 40px; height: 60px; margin: 0 2px; transition: all 0.1s;
+        }
+        .typing-char.current { border: 3px solid #1e293b; border-radius: 4px; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
+        .typing-char.done { color: rgba(255,255,255,0.5); }
+        .typing-char.waiting { color: #000; }
+        .typing-char.error {
+            border-color: #ef4444; color: #ef4444; background-color: #fee2e2;
+            animation: shake 0.3s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+        .animate-bounce-alert {
+            animation: bounceAlert 1s infinite;
+        }
+        @keyframes bounceAlert {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -10px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3YrmmnBiQm3CeFM83pXua_zkdQ0sC64o",
+            authDomain: "typing-practice-650d5.firebaseapp.com",
+            projectId: "typing-practice-650d5",
+            storageBucket: "typing-practice-650d5.firebasestorage.app",
+            messagingSenderId: "873105029860",
+            appId: "1:873105029860:web:323a84bf36169c22da0af1"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        auth.signInAnonymously().catch(e => console.log(e));
+
+        const lessons = [
+            { id: 1, title: "Bài 1: Phím cơ sở", text: "a s d f g h j k l ;" },
+            { id: 2, title: "Bài 2: Phím trên", text: "q w e r t y u i o p" },
+            { id: 3, title: "Bài 3: Phím dưới", text: "z x c v b n m , . /" },
+            { id: 4, title: "Bài 4: Tổng hợp", text: "a q z s w x d e c f r v" },
+            { id: 5, title: "Bài 5: Luyện dấu cách", text: "a s d f j k l ; a s d f j k l ;" },
+            { id: 6, title: "Bài 6: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0" }
+        ];
+
+        const CuteHand = ({ isLeft, expectedFingerName }) => {
+            const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
+
+            const getFill = (fingerName) => {
+                const fullTargetName = `${fingerName} tay ${isLeft ? 'trái' : 'phải'}`;
+                if (expectedFingerName === fullTargetName) {
+                    if (fingerName === 'Ngón út') return '#ffa94d';     
+                    if (fingerName === 'Ngón áp út') return '#ffd43b';  
+                    if (fingerName === 'Ngón giữa') return '#74c0fc';   
+                    if (fingerName === 'Ngón trỏ') return '#69db7c';    
+                }
+                if (expectedFingerName === 'Ngón cái' && fingerName
