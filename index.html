@@ -106,7 +106,8 @@
             { id: 2, title: "Bài 2: Phím trên", text: "q w e r t y u i o p" },
             { id: 3, title: "Bài 3: Phím dưới", text: "z x c v b n m , . /" },
             { id: 4, title: "Bài 4: Tổng hợp", text: "a q z s w x d e c f r v" },
-            { id: 5, title: "Bài 5: Luyện dấu cách", text: "a s d f j k l ; a s d f j k l ;" }
+            { id: 5, title: "Bài 5: Luyện dấu cách", text: "a s d f j k l ; a s d f j k l ;" },
+            { id: 6, title: "Bài 6: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0" }
         ];
 
         const CuteHand = ({ isLeft, expectedFingerName }) => {
@@ -381,7 +382,7 @@
                     <div className="bg-[#202124] text-white p-2 flex justify-between items-center shadow-md z-20 h-14">
                         <div className="flex items-center gap-4 h-full">
                             <div className="font-bold text-lg ml-2 flex items-center gap-2">
-                                ⏳ TypingPractice
+                                ⏳ Go
                             </div>
                             <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')}`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
@@ -456,15 +457,12 @@
                         </div>
                     ) : null}
 
-                    {/* SỬ DỤNG FLEXBOX ĐỂ CĂN GIỮA TUYỆT ĐỐI BÀN TAY VÀO KHOẢNG TRỐNG 2 BÊN BÀN PHÍM */}
                     <div className="bg-[#e5e7eb] w-full flex justify-between items-end z-20 relative border-t border-gray-300">
                         
-                        {/* Khu vực lề trái chứa bàn tay */}
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
                             <CuteHand isLeft={true} expectedFingerName={fingerInfo ? fingerInfo.name : null} />
                         </div>
 
-                        {/* Khu vực trung tâm chứa bàn phím */}
                         <div className="flex flex-col gap-1 z-20 flex-shrink-0 py-6">
                             {keyboardLayout.map((row, rowIndex) => (
                                 <div key={rowIndex} className="flex gap-1 justify-center">
@@ -486,7 +484,6 @@
                             ))}
                         </div>
 
-                        {/* Khu vực lề phải chứa bàn tay */}
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
                             <CuteHand isLeft={false} expectedFingerName={fingerInfo ? fingerInfo.name : null} />
                         </div>
@@ -526,10 +523,7 @@
                                                 <tr><td colSpan="5" className="p-6 text-center text-gray-500 italic">Chưa có kết quả nào trong phiên này...</td></tr>
                                             ) : (
                                                 displayedStats.map(stat => {
-                                                    // KIỂM TRA ĐỘ CHÍNH XÁC ĐỂ HIGHLIGHT NỔI BẬT
                                                     const isNeedsImprovement = stat.accuracy < 80;
-                                                    
-                                                    // Đổi màu nền của cả dòng thành màu đỏ nhạt nếu dưới 80%
                                                     const rowClass = isNeedsImprovement 
                                                         ? "bg-red-50 hover:bg-red-100 border-b border-red-200 transition-colors" 
                                                         : "hover:bg-green-50 border-b border-gray-100 transition-colors";
