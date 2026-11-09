@@ -79,4 +79,342 @@
         window.onerror = function(msg, url, line) {
             const errDiv = document.getElementById('system-error-log');
             errDiv.style.display = 'block';
-            errDiv.innerHTML = "Lỗi khởi chạy: " + msg + " (Dòng: " + line + "). Bạn hãy nhấn Ctrl + F5 để tải lại bộ nhớ trang web
+            errDiv.innerHTML = "Lỗi khởi chạy: " + msg + " (Dòng: " + line + "). Bạn hãy nhấn Ctrl + F5 để tải lại bộ nhớ trang web.";
+            return false;
+        };
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3YrmmnBiQm3CeFM83pXua_zkdQ0sC64o",
+            authDomain: "typing-practice-650d5.firebaseapp.com",
+            projectId: "typing-practice-650d5",
+            storageBucket: "typing-practice-650d5.firebasestorage.app",
+            messagingSenderId: "873105029860",
+            appId: "1:873105029860:web:323a84bf36169c22da0af1"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        auth.signInAnonymously().catch(e => console.log("Loi dang nhap:", e));
+
+        const lessons = [
+            { id: 1, title: "Bài 1: Phím cơ sở", text: "a s d f g h j k l ;" },
+            { id: 2, title: "Bài 2: Phím trên", text: "q w e r t y u i o p" },
+            { id: 3, title: "Bài 3: Phím dưới", text: "z x c v b n m , . /" },
+            { id: 4, title: "Bài 4: Tổng hợp", text: "a q z s w x d e c f r v" },
+            { id: 5, title: "Bài 5: Luyện dấu cách", text: "a s d f j k l ; a s d f j k l ;" },
+            { id: 6, title: "Bài 6: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0" }
+        ];
+
+        const CuteHand = ({ isLeft, expectedFingerName }) => {
+            const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
+
+            const getFill = (fingerName) => {
+                const fullTargetName = `${fingerName} tay${isLeft ? 'trái' : 'phải'}`;
+                if (expectedFingerName === fullTargetName) {
+                    if (fingerName === 'Ngón út') return '#ffa94d';     
+                    if (fingerName === 'Ngón áp út') return '#ffd43b';  
+                    if (fingerName === 'Ngón giữa') return '#74c0fc';   
+                    if (fingerName === 'Ngón trỏ') return '#69db7c';    
+                }
+                if (expectedFingerName === 'Ngón cái' && fingerName === 'Ngón cái') return '#ffd43b';
+                return '#fed7aa'; 
+            };
+
+            return (
+                <svg width="200" height="240" viewBox="0 0 115 135" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
+                    <rect x="25" y="110" width="50" height="20" rx="5" fill={cuffColor} stroke="#1e293b" strokeWidth="3"/>
+                    <rect x="20" y="40" width="14" height="40" rx="7" fill={getFill('Ngón út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="36" y="20" width="14" height="60" rx="7" fill={getFill('Ngón áp út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="52" y="10" width="14" height="70" rx="7" fill={getFill('Ngón giữa')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="68" y="30" width="14" height="50" rx="7" fill={getFill('Ngón trỏ')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="18" y="65" width="66" height="50" rx="15" fill="#fed7aa" stroke="#1e293b" strokeWidth="3"/>
+                    <path d="M 82 75 Q 110 75 105 93 Q 100 103 80 95" fill={getFill('Ngón cái')} stroke="#1e293b" strokeWidth="3" strokeLinecap="round" style={{transition: 'fill 0.2s'}}/>
+                    <rect x="21" y="66" width="60" height="46" rx="10" fill="#fed7aa" />
+                    <path d="M 80 77 Q 106 77 101 90 Q 95 100 80 92" fill={getFill('Ngón cái')} style={{transition: 'fill 0.2s'}}/>
+                    <circle cx="38" cy="90" r="3" fill="#1e293b"/>
+                    <circle cx="62" cy="90" r="3" fill="#1e293b"/>
+                    <path d="M 45 95 Q 50 100 55 95" stroke="#1e293b" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                    <circle cx="30" cy="94" r="4" fill="#fca5a5" opacity="0.8"/>
+                    <circle cx="70" cy="94" r="4" fill="#fca5a5" opacity="0.8"/>
+                </svg>
+            );
+        };
+
+        const keyboardLayout = [
+            [
+                { char: '`', class: 'c-orange w-10 h-10' }, { char: '1', class: 'c-orange w-10 h-10' }, { char: '2', class: 'c-yellow w-10 h-10' }, 
+                { char: '3', class: 'c-blue w-10 h-10' }, { char: '4', class: 'c-orange w-10 h-10' }, { char: '5', class: 'c-orange w-10 h-10' }, 
+                { char: '6', class: 'c-green w-10 h-10' }, { char: '7', class: 'c-green w-10 h-10' }, { char: '8', class: 'c-blue w-10 h-10' }, 
+                { char: '9', class: 'c-yellow w-10 h-10' }, { char: '0', class: 'c-orange w-10 h-10' }, { char: '-', class: 'c-orange w-10 h-10' }, 
+                { char: '=', class: 'c-orange w-10 h-10' }, { char: 'Backspace', class: 'c-orange w-24 h-10 text-xs' }
+            ],
+            [
+                { char: 'Tab', class: 'c-orange w-16 h-10 text-xs' }, { char: 'q', class: 'c-orange w-10 h-10 uppercase' }, { char: 'w', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'e', class: 'c-blue w-10 h-10 uppercase' }, { char: 'r', class: 'c-orange w-10 h-10 uppercase' }, { char: 't', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'y', class: 'c-green w-10 h-10 uppercase' }, { char: 'u', class: 'c-green w-10 h-10 uppercase' }, { char: 'i', class: 'c-blue w-10 h-10 uppercase' }, 
+                { char: 'o', class: 'c-yellow w-10 h-10 uppercase' }, { char: 'p', class: 'c-orange w-10 h-10 uppercase' }, { char: '[', class: 'c-orange w-10 h-10' }, 
+                { char: ']', class: 'c-orange w-10 h-10' }, { char: '\\', class: 'c-orange w-14 h-10' }
+            ],
+            [
+                { char: 'CapsLock', class: 'c-orange w-20 h-10 text-xs' }, { char: 'a', class: 'c-orange w-10 h-10 uppercase' }, { char: 's', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'd', class: 'c-blue w-10 h-10 uppercase' }, { char: 'f', class: 'c-orange w-10 h-10 uppercase' }, { char: 'g', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'h', class: 'c-green w-10 h-10 uppercase' }, { char: 'j', class: 'c-green w-10 h-10 uppercase' }, { char: 'k', class: 'c-blue w-10 h-10 uppercase' }, 
+                { char: 'l', class: 'c-yellow w-10 h-10 uppercase' }, { char: ';', class: 'c-orange w-10 h-10' }, { char: "'", class: 'c-orange w-10 h-10' }, 
+                { char: 'Enter', class: 'c-orange w-20 h-10 text-xs' }
+            ],
+            [
+                { char: 'Shift', class: 'c-orange w-28 h-10 text-xs' }, { char: 'z', class: 'c-orange w-10 h-10 uppercase' }, { char: 'x', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'c', class: 'c-blue w-10 h-10 uppercase' }, { char: 'v', class: 'c-orange w-10 h-10 uppercase' }, { char: 'b', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'n', class: 'c-green w-10 h-10 uppercase' }, { char: 'm', class: 'c-green w-10 h-10 uppercase' }, { char: ',', class: 'c-yellow w-10 h-10' }, 
+                { char: '.', class: 'c-orange w-10 h-10' }, { char: '/', class: 'c-orange w-10 h-10' }, { char: 'Shift_R', label: 'Shift', class: 'c-orange w-24 h-10 text-xs' }
+            ],
+            [
+                { char: 'Ctrl', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Win', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Alt', class: 'c-yellow w-12 h-10 text-xs' }, 
+                { char: ' ', label: 'SPACE', class: 'c-yellow w-[300px] h-10 text-xs' }, 
+                { char: 'AltGr', class: 'c-yellow w-12 h-10 text-xs' }, { char: 'Win_R', label: 'Win', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Menu', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Ctrl_R', label: 'Ctrl', class: 'c-orange w-12 h-10 text-xs' }
+            ]
+        ];
+
+        const getFingerSuggestion = (char) => {
+            if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-" };
+            const c = char ? char.toLowerCase() : "";
+            const map = {
+                'q': 'Ngón út tay trái', 'a': 'Ngón út tay trái', 'z': 'Ngón út tay trái', '1': 'Ngón út tay trái',
+                'w': 'Ngón áp út tay trái', 's': 'Ngón áp út tay trái', 'x': 'Ngón áp út tay trái', '2': 'Ngón áp út tay trái',
+                'e': 'Ngón giữa tay trái', 'd': 'Ngón giữa tay trái', 'c': 'Ngón giữa tay trái', '3': 'Ngón giữa tay trái',
+                'r': 'Ngón trỏ tay trái', 'f': 'Ngón trỏ tay trái', 'v': 'Ngón trỏ tay trái', '4': 'Ngón trỏ tay trái',
+                't': 'Ngón trỏ tay trái', 'g': 'Ngón trỏ tay trái', 'b': 'Ngón trỏ tay trái', '5': 'Ngón trỏ tay trái',
+                'y': 'Ngón trỏ tay phải', 'h': 'Ngón trỏ tay phải', 'n': 'Ngón trỏ tay phải', '6': 'Ngón trỏ tay phải',
+                'u': 'Ngón trỏ tay phải', 'j': 'Ngón trỏ tay phải', 'm': 'Ngón trỏ tay phải', '7': 'Ngón trỏ tay phải',
+                'i': 'Ngón giữa tay phải', 'k': 'Ngón giữa tay phải', ',': 'Ngón giữa tay phải', '8': 'Ngón giữa tay phải',
+                'o': 'Ngón áp út tay phải', 'l': 'Ngón áp út tay phải', '.': 'Ngón áp út tay phải', '9': 'Ngón áp út tay phải',
+                'p': 'Ngón út tay phải', ';': 'Ngón út tay phải', '/': 'Ngón út tay phải', '0': 'Ngón út tay phải'
+            };
+            const name = map[c] || "Ngón út tay phải";
+            return { name, letter: c };
+        };
+
+        function App() {
+            const [playerName, setPlayerName] = React.useState("");
+            const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
+            const [showNameAlert, setShowNameAlert] = React.useState(false);     
+            const [lesson, setLesson] = React.useState(lessons[0]);
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [errors, setErrors] = React.useState(0);
+            const [startTime, setStartTime] = React.useState(null);
+            const [isFinished, setIsFinished] = React.useState(false);
+            const [showStats, setShowStats] = React.useState(false);
+            const [statsData, setStatsData] = React.useState([]);
+            const [isTeacherMode, setIsTeacherMode] = React.useState(false);
+            const [activeKey, setActiveKey] = React.useState(null); 
+            const [accuracy, setAccuracy] = React.useState(100);
+            const [hasError, setHasError] = React.useState(false); 
+            const [sessionStart] = React.useState(() => Date.now() - 30000); 
+
+            React.useEffect(() => {
+                const unsubscribe = db.collection("stats")
+                                      .orderBy("timestamp", "desc")
+                                      .limit(100)
+                                      .onSnapshot(snapshot => {
+                    const data = snapshot.docs.map(doc => {
+                        const docData = doc.data();
+                        let timeMs = 0;
+                        if (docData.timestamp && typeof docData.timestamp.toMillis === 'function') {
+                            timeMs = docData.timestamp.toMillis();
+                        }
+                        return { id: doc.id, timeMs: timeMs, ...docData };
+                    });
+                    const currentSessionData = data.filter(item => item.timeMs >= sessionStart);
+                    setStatsData(currentSessionData);
+                });
+                return () => unsubscribe();
+            }, [sessionStart]);
+
+            React.useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
+                    if (isFinished) return;
+                    if (!isNameConfirmed || !playerName || playerName.trim() === "") {
+                        setShowNameAlert(true);
+                        setTimeout(() => setShowNameAlert(false), 3500);
+                        return;
+                    }
+                    if (e.key) {
+                        setActiveKey(e.key.toLowerCase());
+                    }
+                    const expectedChar = lesson.text[currentIndex];
+                    if (currentIndex === 0 && !startTime) setStartTime(Date.now());
+
+                    if (e.key === expectedChar) {
+                        setHasError(false); 
+                        if (currentIndex + 1 === lesson.text.length) {
+                            setIsFinished(true);
+                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                            const finalAcc = Math.max(0, 100 - (errors * 5));
+                            db.collection("stats").add({
+                                playerName: playerName || "Khách",
+                                lessonTitle: lesson.title || "",
+                                errors: errors || 0,
+                                accuracy: finalAcc || 0,
+                                timeTaken: timeTaken || 0,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else {
+                            setCurrentIndex(currentIndex + 1);
+                        }
+                    } else {
+                        setHasError(true);
+                        const newErrors = errors + 1;
+                        setErrors(newErrors);
+                        setAccuracy(Math.max(0, 100 - (newErrors * 5)));
+                    }
+                };
+
+                const handleKeyUp = () => setActiveKey(null);
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('keyup', handleKeyUp);
+                };
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed]);
+
+            const handleNameKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    if (e.nativeEvent && (e.nativeEvent.isComposing || e.keyCode === 229)) return;
+                    e.preventDefault();
+                    if (playerName && playerName.trim() !== "") {
+                        setIsNameConfirmed(true);
+                        setShowNameAlert(false); 
+                        e.target.blur();         
+                    } else {
+                        setShowNameAlert(true);
+                    }
+                }
+            };
+
+            const resetLesson = () => {
+                setCurrentIndex(0); setErrors(0); setAccuracy(100); setStartTime(null); setIsFinished(false); setShowStats(false); setHasError(false);
+            };
+
+            const handleNextLesson = () => {
+                const currentIdx = lessons.findIndex(l => l.id === lesson.id);
+                if (currentIdx < lessons.length - 1) {
+                    setLesson(lessons[currentIdx + 1]);
+                } else {
+                    setLesson(lessons[0]); 
+                }
+                resetLesson();
+            };
+
+            const formatTime = (seconds) => {
+                if (isNaN(seconds) || seconds === null) return "00:00";
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+            
+            const clearAllData = async () => {
+                if (window.confirm("Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN toàn bộ lịch sử điểm trên máy chủ không?")) {
+                    try {
+                        const snapshot = await db.collection("stats").get();
+                        const batches = [];
+                        let currentBatch = db.batch();
+                        let count = 0;
+                        snapshot.docs.forEach((doc) => {
+                            currentBatch.delete(doc.ref);
+                            count++;
+                            if (count === 490) {
+                                batches.push(currentBatch.commit());
+                                currentBatch = db.batch();
+                                count = 0;
+                            }
+                        });
+                        if (count > 0) batches.push(currentBatch.commit());
+                        await Promise.all(batches);
+                        alert("Đã làm sạch toàn bộ dữ liệu thành công!");
+                    } catch (error) {
+                        console.error("Lỗi xóa dữ liệu:", error);
+                        alert("Có lỗi xảy ra khi xóa dữ liệu.");
+                    }
+                }
+            };
+
+            const displayedStats = isTeacherMode 
+                ? statsData 
+                : statsData.filter(stat => {
+                    const pName = stat.playerName || "";
+                    const currentPName = playerName || "";
+                    return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
+                });
+
+            const currentExpectedChar = isFinished ? null : lesson.text[currentIndex];
+            const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
+
+            return (
+                <div className="flex flex-col h-screen overflow-hidden relative">
+                    {showNameAlert ? (
+                        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700 w-max max-w-[90%] text-center">
+                            ⚠️ Cảnh báo: Em hãy nhập tên và NHẤN PHÍM ENTER để xác nhận trước khi gõ nhé!
+                        </div>
+                    ) : null}
+
+                    <div className="bg-[#202124] text-white p-2 flex justify-between items-center shadow-md z-20 h-14">
+                        <div className="flex items-center gap-4 h-full">
+                            <div className="font-bold text-lg ml-2 flex items-center gap-2">
+                                ⌨️ Go
+                            </div>
+                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')}`}>
+                                <span className="text-gray-500 mr-2 text-sm">👤</span>
+                                <input 
+                                    type="text" placeholder="Nhập tên của em..." 
+                                    value={playerName} 
+                                    onChange={(e) => {
+                                        setPlayerName(e.target.value);
+                                        setIsNameConfirmed(false); 
+                                    }} 
+                                    onKeyDown={handleNameKeyDown}
+                                    className="text-black outline-none border-none bg-transparent w-40 text-sm font-bold"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-6 items-center text-sm">
+                            <select className="text-black px-2 py-1.5 rounded outline-none" value={lesson.id} onChange={(e) => { 
+                                const selected = lessons.find(l => l.id.toString() === e.target.value);
+                                if(selected) { setLesson(selected); resetLesson(); }
+                            }}>
+                                {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+                            </select>
+                            <span className="font-bold text-blue-400">Độ chính xác: {accuracy}%</span>
+                            <button onClick={() => setShowStats(true)} className="bg-[#dcfce7] border border-[#22c55e] text-[#166534] px-4 py-1.5 rounded font-bold shadow-sm hover:bg-[#bbf7d0] transition flex items-center gap-2">
+                                📊 Thống kê
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 ocean-bg relative">
+                        <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
+                        <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
+                        
+                        <div className="absolute top-10 left-20 text-6xl opacity-80">☁️</div>
+                        <div className="absolute top-16 right-32 text-6xl opacity-80">☁️</div>
+                        <div className="absolute bottom-2 left-[5%] text-5xl z-10 opacity-90">🪸</div>
+                        <div className="absolute bottom-1 left-[15%] text-4xl z-10">🐚</div>
+                        <div className="absolute bottom-2 left-32 text-4xl z-10">🦀</div>
+                        <div className="absolute bottom-16 left-[25%] text-4xl z-10 fish">🐠</div>
+                        <div className="absolute bottom-3 left-[40%] text-5xl z-10 opacity-80">🪸</div>
+                        <div className="absolute bottom-8 left-[50%] text-4xl z-10 fish-slow">🐡</div>
+                        <div className="absolute bottom-6 right-[35%] text-4xl z-10">🐙</div>
+                        <div className="absolute bottom-0 right-[25%] text-6xl z-10 opacity-90">🪸</div>
+                        <div className="absolute bottom-20 right-[15%] text-4xl z-10 fish">🐠</div>
+                        <div className="absolute bottom-4 right-20 text-5xl z-10">🐳</div>
+                        <div className="absolute bottom-2 right-[5%] text-3xl z-10">🐚</div>
+
+                        <div className="absolute top-0 left-0 w-full h-[70%] flex flex-col items-center justify-center z-10">
+                            {isFinished ? (
