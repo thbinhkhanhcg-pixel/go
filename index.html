@@ -46,8 +46,8 @@
             display: inline-flex; align-items: center; justify-content: center;
             min-width: 40px; height: 60px; margin: 0 2px; transition: all 0.1s;
         }
-        .typing-char.current { border: 3px solid #1e293b; border-radius: 4px; color: #000; font-weight: bold; }
-        .typing-char.done { color: #9ca3af; }
+        .typing-char.current { border: 3px solid #1e293b; border-radius: 4px; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
+        .typing-char.done { color: rgba(255,255,255,0.5); }
         .typing-char.waiting { color: #000; }
         
         .typing-char.error {
@@ -60,7 +60,6 @@
             40%, 80% { transform: translateX(4px); }
         }
         
-        /* Hiệu ứng nhấp nháy cho thông báo nhắc nhập tên */
         .animate-bounce-alert {
             animation: bounceAlert 1s infinite;
         }
@@ -94,43 +93,43 @@
             { id: 4, title: "Bài 4: Tổng hợp", text: "a q z s w x d e c f r v" }
         ];
 
-        // COMPONENT BÀN TAY (Đã phóng to, ngón tay dài hơn, có đổi màu)
+        // COMPONENT BÀN TAY (Ngón cái đã được kéo dài ra thêm)
         const CuteHand = ({ isLeft, expectedFingerName }) => {
             const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
 
             const getFill = (fingerName) => {
                 const fullTargetName = `${fingerName} tay ${isLeft ? 'trái' : 'phải'}`;
                 if (expectedFingerName === fullTargetName) {
-                    if (fingerName === 'Ngón út') return '#ffa94d';     // Cam
-                    if (fingerName === 'Ngón áp út') return '#ffd43b';  // Vàng
-                    if (fingerName === 'Ngón giữa') return '#74c0fc';   // Xanh dương
-                    if (fingerName === 'Ngón trỏ') return '#69db7c';    // Xanh lá
+                    if (fingerName === 'Ngón út') return '#ffa94d';     
+                    if (fingerName === 'Ngón áp út') return '#ffd43b';  
+                    if (fingerName === 'Ngón giữa') return '#74c0fc';   
+                    if (fingerName === 'Ngón trỏ') return '#69db7c';    
                 }
                 if (expectedFingerName === 'Ngón cái' && fingerName === 'Ngón cái') return '#ffd43b';
                 return '#fed7aa'; 
             };
 
             return (
-                // Phóng to kích thước từ width=170 lên 200, height lên 240
-                <svg width="200" height="240" viewBox="0 0 100 135" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
+                // Mở rộng viewBox để có không gian vẽ ngón cái dài hơn
+                <svg width="200" height="240" viewBox="0 0 115 135" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
                     {/* Tay áo */}
                     <rect x="25" y="110" width="50" height="20" rx="5" fill={cuffColor} stroke="#1e293b" strokeWidth="3"/>
                     
-                    {/* Các ngón tay được kéo dài hơn nhiều so với lòng bàn tay */}
+                    {/* Các ngón tay */}
                     <rect x="20" y="40" width="14" height="40" rx="7" fill={getFill('Ngón út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
                     <rect x="36" y="20" width="14" height="60" rx="7" fill={getFill('Ngón áp út')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
                     <rect x="52" y="10" width="14" height="70" rx="7" fill={getFill('Ngón giữa')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
                     <rect x="68" y="30" width="14" height="50" rx="7" fill={getFill('Ngón trỏ')} stroke="#1e293b" strokeWidth="3" style={{transition: 'fill 0.2s'}}/>
                     
-                    {/* Lòng bàn tay lùi xuống dưới */}
+                    {/* Lòng bàn tay */}
                     <rect x="18" y="65" width="66" height="50" rx="15" fill="#fed7aa" stroke="#1e293b" strokeWidth="3"/>
                     
-                    {/* Ngón cái */}
-                    <path d="M 82 75 Q 98 75 95 90 Q 92 100 80 95" fill={getFill('Ngón cái')} stroke="#1e293b" strokeWidth="3" strokeLinecap="round" style={{transition: 'fill 0.2s'}}/>
+                    {/* Ngón cái - Đã được kéo dài ra thêm */}
+                    <path d="M 82 75 Q 110 75 105 93 Q 100 103 80 95" fill={getFill('Ngón cái')} stroke="#1e293b" strokeWidth="3" strokeLinecap="round" style={{transition: 'fill 0.2s'}}/>
                     
                     {/* Xóa viền thừa bên trong lòng bàn tay */}
                     <rect x="21" y="66" width="60" height="46" rx="10" fill="#fed7aa" />
-                    <path d="M 80 77 Q 94 77 92 88 Q 90 96 80 92" fill={getFill('Ngón cái')} style={{transition: 'fill 0.2s'}}/>
+                    <path d="M 80 77 Q 106 77 101 90 Q 95 100 80 92" fill={getFill('Ngón cái')} style={{transition: 'fill 0.2s'}}/>
 
                     {/* Khuôn mặt */}
                     <circle cx="38" cy="90" r="3" fill="#1e293b"/>
@@ -198,8 +197,8 @@
 
         function App() {
             const [playerName, setPlayerName] = React.useState("");
-            const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); // Xác nhận đã nhập tên
-            const [showNameAlert, setShowNameAlert] = React.useState(false);     // Bật thông báo đỏ
+            const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
+            const [showNameAlert, setShowNameAlert] = React.useState(false);     
 
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -228,10 +227,9 @@
                     if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
                     if (isFinished) return;
 
-                    // Yêu cầu học sinh phải nhập tên và nhấn Enter mới được gõ
                     if (!isNameConfirmed || playerName.trim() === "") {
                         setShowNameAlert(true);
-                        setTimeout(() => setShowNameAlert(false), 3500); // Ẩn cảnh báo sau 3.5 giây
+                        setTimeout(() => setShowNameAlert(false), 3500);
                         return;
                     }
 
@@ -272,15 +270,14 @@
                 };
             }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed]);
 
-            // Xử lý khi nhập tên xong và nhấn Enter
             const handleNameKeyDown = (e) => {
                 if (e.key === 'Enter') {
                     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                     e.preventDefault();
                     if (playerName.trim() !== "") {
                         setIsNameConfirmed(true);
-                        setShowNameAlert(false); // Tắt thông báo nếu đang có
-                        e.target.blur();         // Sẵn sàng gõ
+                        setShowNameAlert(false); 
+                        e.target.blur();         
                     } else {
                         setShowNameAlert(true);
                     }
@@ -296,7 +293,7 @@
                 if (currentIdx < lessons.length - 1) {
                     setLesson(lessons[currentIdx + 1]);
                 } else {
-                    setLesson(lessons[0]); // Nếu hết bài thì quay về bài 1
+                    setLesson(lessons[0]); 
                 }
                 resetLesson();
             };
@@ -318,9 +315,8 @@
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
                     
-                    {/* Bảng thông báo yêu cầu nhập tên (Nổi lên giữa màn hình) */}
                     {showNameAlert && (
-                        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700">
+                        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700 w-max max-w-[90%] text-center">
                             ⚠️ Cảnh báo: Em hãy nhập tên và NHẤN PHÍM ENTER để xác nhận trước khi gõ nhé!
                         </div>
                     )}
@@ -337,7 +333,7 @@
                                     value={playerName} 
                                     onChange={(e) => {
                                         setPlayerName(e.target.value);
-                                        setIsNameConfirmed(false); // Đổi tên thì phải Enter lại
+                                        setIsNameConfirmed(false); 
                                     }} 
                                     onKeyDown={handleNameKeyDown}
                                     className="text-black outline-none border-none bg-transparent w-40 text-sm font-bold"
@@ -355,25 +351,27 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg flex flex-col items-center justify-center relative">
+                    {/* Vùng biển và khung chữ được chia lại */}
+                    <div className="flex-1 ocean-bg relative">
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
                         
                         <div className="absolute top-10 left-20 text-6xl opacity-80">☁️</div>
                         <div className="absolute top-16 right-32 text-6xl opacity-80">☁️</div>
-                        <div className="absolute bottom-8 right-20 text-5xl z-10">🐳</div>
-                        <div className="absolute bottom-6 left-32 text-4xl z-10">🦀</div>
+                        <div className="absolute bottom-4 right-20 text-5xl z-10">🐳</div>
+                        <div className="absolute bottom-2 left-32 text-4xl z-10">🦀</div>
 
-                        <div className="z-10 mt-10">
+                        {/* Căn giữa tuyệt đối nội dung gõ trong khu vực màu xanh nước biển */}
+                        <div className="absolute top-0 left-0 w-full h-[70%] flex flex-col items-center justify-center z-10">
                             {isFinished ? (
                                 <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6">
                                     <h2 className="text-3xl font-bold text-green-600">🎉 Tuyệt vời! Em đã hoàn thành bài tập!</h2>
                                     <div className="flex gap-4">
                                         <button onClick={resetLesson} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
-                                            🔄 Gõ lại bài này
+                                            🔄 Gõ lại
                                         </button>
                                         <button onClick={handleNextLesson} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
-                                            ⏭️ Bài tiếp theo
+                                            ⏭️ Bài tiếp
                                         </button>
                                     </div>
                                 </div>
@@ -404,8 +402,9 @@
                     )}
 
                     <div className="bg-[#e5e7eb] pb-6 pt-4 flex justify-center z-20 relative border-t border-gray-300">
-                        {/* Bàn tay trái - Được đưa vào gần sát bàn phím hơn */}
-                        <div className="absolute left-[5%] md:left-[10%] lg:left-[18%] bottom-0 z-30 pointer-events-none">
+                        
+                        {/* Đẩy 2 bàn tay sát mép màn hình, tránh đè lên bàn phím */}
+                        <div className="absolute left-[-10px] sm:left-2 md:left-8 lg:left-12 xl:left-24 bottom-0 z-30 pointer-events-none">
                             <CuteHand isLeft={true} expectedFingerName={fingerInfo?.name} />
                         </div>
 
@@ -424,13 +423,12 @@
                             ))}
                         </div>
 
-                        {/* Bàn tay phải - Được đưa vào gần sát bàn phím hơn */}
-                        <div className="absolute right-[5%] md:right-[10%] lg:right-[18%] bottom-0 z-30 pointer-events-none">
+                        {/* Đẩy 2 bàn tay sát mép màn hình, tránh đè lên bàn phím */}
+                        <div className="absolute right-[-10px] sm:right-2 md:right-8 lg:right-12 xl:right-24 bottom-0 z-30 pointer-events-none">
                             <CuteHand isLeft={false} expectedFingerName={fingerInfo?.name} />
                         </div>
                     </div>
 
-                    {/* Modal Thống kê - Giữ nguyên không đổi */}
                     {showStats && (
                         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
                             <div className="bg-white rounded-xl shadow-2xl w-3/4 max-w-4xl flex flex-col max-h-[80vh] overflow-hidden border-2 border-green-500">
