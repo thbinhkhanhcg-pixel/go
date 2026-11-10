@@ -6,12 +6,12 @@
     <title>Go - Luyện gõ phím</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-app-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-auth-compat.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; margin: 0; background-color: #e5e7eb; }
@@ -70,48 +70,39 @@
             20%, 60% { transform: translateX(-4px); }
             40%, 80% { transform: translateX(4px); }
         }
+        .animate-bounce-alert {
+            animation: bounceAlert 1s infinite;
+        }
+        @keyframes bounceAlert {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -10px); }
+        }
     </style>
 </head>
 <body>
-    
-    <div id="root">
-        <div id="loading-screen" style="text-align:center; padding-top: 15%; font-family: sans-serif; color: #1e293b;">
-            <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 10px;">⏳ Đang tải phần mềm Luyện Gõ...</h1>
-            <p style="font-size: 18px;">Đang thiết lập bàn phím và đáy đại dương...</p>
-        </div>
+    <div id="check-libs" style="text-align:center; padding-top: 15%; font-family: sans-serif;">
+        <h1 style="font-size: 32px; font-weight: bold; color: #1e293b; margin-bottom: 10px;">⏳ Đang tải dữ liệu...</h1>
+        <p style="font-size: 18px; color: #64748b;">Đang kết nối máy chủ...</p>
     </div>
 
-    <!-- Hệ thống ép tải lại khi bị kẹt Cache -->
     <script>
         setTimeout(function() {
-            var loading = document.getElementById('loading-screen');
-            if (loading) {
-                loading.innerHTML = '<h1 style="color:#ef4444; font-size:28px; margin-bottom:20px;">Trình duyệt của bạn đang bị kẹt dữ liệu cũ!</h1><button onclick="window.location.href=window.location.pathname+\'?v=\'+new Date().getTime()" style="padding:15px 30px; font-size:20px; background-color:#2563eb; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 BẤM VÀO ĐÂY ĐỂ SỬA LỖI MÀN HÌNH XÁM</button>';
+            var checkDiv = document.getElementById('check-libs');
+            if (checkDiv) {
+                var missing = [];
+                if (typeof React === 'undefined') missing.push('React');
+                if (typeof Babel === 'undefined') missing.push('Babel');
+                
+                if (missing.length > 0) {
+                    checkDiv.innerHTML = '<h1 style="color:#ef4444; font-size:28px;">Mạng trường học đang chặn thư viện: ' + missing.join(', ') + '</h1><p>Hãy thử mở trang web này bằng mạng 4G hoặc Wifi khác.</p>';
+                }
             }
-        }, 4000);
+        }, 5000);
     </script>
 
-    <script type="text/babel">
-        class ErrorBoundary extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = { hasError: false, errorInfo: null };
-            }
-            static getDerivedStateFromError(error) { return { hasError: true }; }
-            componentDidCatch(error, errorInfo) { this.setState({ errorInfo: error.toString() }); }
-            render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="p-10 text-red-600 bg-white m-10 rounded-xl shadow-2xl border-4 border-red-500 text-center relative z-50">
-                            <h2 className="text-3xl font-bold mb-4">⚠️ LỖI HIỂN THỊ GIAO DIỆN</h2>
-                            <code className="bg-gray-100 p-4 block text-left text-sm text-gray-800 border rounded">{this.state.errorInfo}</code>
-                        </div>
-                    );
-                }
-                return this.props.children; 
-            }
-        }
+    <div id="root"></div>
 
+    <script type="text/babel">
         const firebaseConfig = {
             apiKey: "AIzaSyC3YrmmnBiQm3CeFM83pXua_zkdQ0sC64o",
             authDomain: "typing-practice-650d5.firebaseapp.com",
@@ -160,7 +151,6 @@
                 if (expectedFingerName === 'Ngón cái' && fingerName === 'Ngón cái') return '#ffd43b';
                 return '#fed7aa'; 
             };
-
             return (
                 <svg width="200" height="240" viewBox="0 0 115 135" style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }} className="drop-shadow-2xl">
                     <rect x="25" y="110" width="50" height="20" rx="5" fill={cuffColor} stroke="#1e293b" strokeWidth="3"/>
@@ -229,4 +219,163 @@
                 'u': 'Ngón trỏ tay phải', 'j': 'Ngón trỏ tay phải', 'm': 'Ngón trỏ tay phải', '7': 'Ngón trỏ tay phải',
                 'i': 'Ngón giữa tay phải', 'k': 'Ngón giữa tay phải', ',': 'Ngón giữa tay phải', '8': 'Ngón giữa tay phải',
                 'o': 'Ngón áp út tay phải', 'l': 'Ngón áp út tay phải', '.': 'Ngón áp út tay phải', '9': 'Ngón áp út tay phải',
-                'p':
+                'p': 'Ngón út tay phải', ';': 'Ngón út tay phải', '/': 'Ngón út tay phải', '0': 'Ngón út tay phải'
+            };
+            const name = map[c] || "Ngón út tay phải";
+            return { name, letter: c };
+        };
+
+        function App() {
+            const [playerName, setPlayerName] = React.useState("");
+            const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
+            const [showNameAlert, setShowNameAlert] = React.useState(false);     
+            const [lesson, setLesson] = React.useState(lessons[0]);
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [errors, setErrors] = React.useState(0);
+            const [startTime, setStartTime] = React.useState(null);
+            const [isFinished, setIsFinished] = React.useState(false);
+            const [showStats, setShowStats] = React.useState(false);
+            const [statsData, setStatsData] = React.useState([]);
+            const [isTeacherMode, setIsTeacherMode] = React.useState(false);
+            const [activeKey, setActiveKey] = React.useState(null); 
+            const [accuracy, setAccuracy] = React.useState(100);
+            const [hasError, setHasError] = React.useState(false); 
+            const [sessionStart] = React.useState(() => Date.now() - 30000); 
+            
+            React.useEffect(() => {
+                const checkDiv = document.getElementById('check-libs');
+                if (checkDiv) checkDiv.style.display = 'none';
+            }, []);
+
+            React.useEffect(() => {
+                if (!db) return;
+                const unsubscribe = db.collection("stats").orderBy("timestamp", "desc").limit(100).onSnapshot(snapshot => {
+                    const data = snapshot.docs.map(doc => {
+                        const docData = doc.data();
+                        let timeMs = 0;
+                        if (docData.timestamp && typeof docData.timestamp.toMillis === 'function') timeMs = docData.timestamp.toMillis();
+                        return { id: doc.id, timeMs: timeMs, ...docData };
+                    });
+                    setStatsData(data.filter(item => item.timeMs >= sessionStart));
+                });
+                return () => unsubscribe();
+            }, [sessionStart]);
+
+            React.useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
+                    if (isFinished) return;
+                    
+                    if (!playerName || playerName.trim() === "") {
+                        setShowNameAlert(true);
+                        setTimeout(() => setShowNameAlert(false), 3500);
+                        return;
+                    }
+                    if (!isNameConfirmed) {
+                        setIsNameConfirmed(true);
+                        setShowNameAlert(false);
+                    }
+                    if (e.key) setActiveKey(e.key.toLowerCase());
+                    const expectedChar = lesson.text[currentIndex];
+                    if (currentIndex === 0 && !startTime) setStartTime(Date.now());
+
+                    if (e.key === expectedChar) {
+                        setHasError(false); 
+                        if (currentIndex + 1 === lesson.text.length) {
+                            setIsFinished(true);
+                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                            const finalAcc = Math.max(0, 100 - (errors * 5));
+                            if (db) {
+                                db.collection("stats").add({
+                                    playerName: playerName || "Khách", lessonTitle: lesson.title || "",
+                                    errors: errors || 0, accuracy: finalAcc || 0, timeTaken: timeTaken || 0,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                }).catch(err => console.log(err));
+                            }
+                        } else {
+                            setCurrentIndex(currentIndex + 1);
+                        }
+                    } else {
+                        setHasError(true);
+                        const newErrors = errors + 1;
+                        setErrors(newErrors);
+                        setAccuracy(Math.max(0, 100 - (newErrors * 5)));
+                    }
+                };
+
+                const handleKeyUp = () => setActiveKey(null);
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('keyup', handleKeyUp);
+                };
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed]);
+
+            const handleNameBlur = () => {
+                if (playerName.trim() !== "") { setIsNameConfirmed(true); setShowNameAlert(false); } 
+                else { setIsNameConfirmed(false); }
+            };
+
+            const handleNameKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    if (e.nativeEvent && (e.nativeEvent.isComposing || e.keyCode === 229)) return;
+                    e.preventDefault();
+                    if (playerName && playerName.trim() !== "") e.target.blur();         
+                    else setShowNameAlert(true);
+                }
+            };
+
+            const resetLesson = () => {
+                setCurrentIndex(0); setErrors(0); setAccuracy(100); setStartTime(null); setIsFinished(false); setShowStats(false); setHasError(false);
+            };
+
+            const handleNextLesson = () => {
+                const currentIdx = lessons.findIndex(l => l.id === lesson.id);
+                if (currentIdx < lessons.length - 1) setLesson(lessons[currentIdx + 1]);
+                else setLesson(lessons[0]); 
+                resetLesson();
+            };
+
+            const formatTime = (seconds) => {
+                if (isNaN(seconds) || seconds === null) return "00:00";
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+            
+            const clearAllData = async () => {
+                if (!db) { alert("Máy chủ đang ngoại tuyến, không thể xóa."); return; }
+                if (window.confirm("Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN toàn bộ lịch sử điểm trên máy chủ không?")) {
+                    try {
+                        const snapshot = await db.collection("stats").get();
+                        const batches = []; let currentBatch = db.batch(); let count = 0;
+                        snapshot.docs.forEach((doc) => {
+                            currentBatch.delete(doc.ref); count++;
+                            if (count === 490) { batches.push(currentBatch.commit()); currentBatch = db.batch(); count = 0; }
+                        });
+                        if (count > 0) batches.push(currentBatch.commit());
+                        await Promise.all(batches);
+                        alert("Đã làm sạch toàn bộ dữ liệu thành công!");
+                    } catch (error) {
+                        alert("Có lỗi xảy ra khi xóa dữ liệu.");
+                    }
+                }
+            };
+
+            const displayedStats = isTeacherMode ? statsData : statsData.filter(stat => {
+                const pName = stat.playerName || ""; const currentPName = playerName || "";
+                return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
+            });
+
+            const currentExpectedChar = isFinished ? null : lesson.text[currentIndex];
+            const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
+
+            return (
+                <div className="flex flex-col h-screen overflow-hidden relative">
+                    
+                    {showNameAlert ? (
+                        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700 w-max max-w-[90%] text-center">
+                            ⚠️ Cảnh báo: Em hãy nhập tên của mình vào ô phía trên trước khi bắt đầu gõ nhé!
+                        </div>
