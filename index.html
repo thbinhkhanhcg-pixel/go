@@ -156,7 +156,6 @@
             isOffline = true;
         }
 
-        // DỮ LIỆU ĐƯỢC CHIA LÀM TỪNG CÂU CHO CÁC BÀI 6, 7, 8 VÀ BÀI 5 TỔNG HỢP
         const lessons = [
             { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;", loops: 3 },
             { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p", loops: 3 },
@@ -302,8 +301,7 @@
             
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
-            // Xác định đoạn chữ cần hiển thị và tổng số lượt (nếu có mảng texts thì lấy theo mảng, nếu không thì lấy thuộc tính loops)
-            const currentText = lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text;
+            const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
 
             React.useEffect(() => {
@@ -326,8 +324,19 @@
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    
+                    // CHẶN TIÊU ĐIỂM CỦA SELECT ĐỂ TRÁNH LỖI NHẢY BÀI KHI GÕ CHỮ B
+                    if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'BUTTON')) {
+                        document.activeElement.blur();
+                    }
+
                     if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
                     if (isFinished) return;
+                    
+                    // Chặn phím không gây cuộn trang hay làm select box tự nhảy
+                    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                        e.preventDefault();
+                    }
                     
                     if (!playerName || playerName.trim() === "") {
                         setShowNameAlert(true);
@@ -476,7 +485,6 @@
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
-            // Cỡ chữ lớn
             const sizeClass = "size-lg";
 
             return (
@@ -516,10 +524,15 @@
                             </div>
                         </div>
                         <div className="flex gap-6 items-center text-sm">
-                            <select className="text-black px-2 py-1.5 rounded outline-none" value={lesson.id} onChange={(e) => { 
-                                const selected = lessons.find(l => l.id.toString() === e.target.value);
-                                if(selected) { setLesson(selected); resetLesson(); }
-                            }}>
+                            <select 
+                                className="text-black px-2 py-1.5 rounded outline-none" 
+                                value={lesson.id} 
+                                onChange={(e) => { 
+                                    const selected = lessons.find(l => l.id.toString() === e.target.value);
+                                    if(selected) { setLesson(selected); resetLesson(); }
+                                    e.target.blur(); // TỰ ĐỘNG BỎ CHỌN NGAY LẬP TỨC ĐỂ TRÁNH LỖI NHẢY BÀI
+                                }}
+                            >
                                 {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
                             </select>
                             
