@@ -58,8 +58,6 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
-        
-        /* CỠ CHỮ CHUẨN ĐỒNG NHẤT KHÔNG NHẢY KÍCH THƯỚC */
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.1s; border-radius: 4px;
@@ -509,13 +507,34 @@
                 }
             };
 
-            const displayedStats = isTeacherMode 
-                ? statsData 
-                : statsData.filter(stat => {
-                    const pName = stat.playerName || "";
-                    const currentPName = playerName || "";
-                    return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
-                });
+            // LOGIC SẮP XẾP BẢNG THỐNG KÊ KHI BẬT CHẾ ĐỘ GIÁO VIÊN
+            const displayedStats = React.useMemo(() => {
+                let stats = [...statsData];
+                if (isTeacherMode) {
+                    return stats.sort((a, b) => {
+                        const matchA = (a.lessonTitle || "").match(/Bài (\d+)/i);
+                        const matchB = (b.lessonTitle || "").match(/Bài (\d+)/i);
+                        const numA = matchA ? parseInt(matchA[1], 10) : 999;
+                        const numB = matchB ? parseInt(matchB[1], 10) : 999;
+                        
+                        if (numA !== numB) return numA - numB;
+                        
+                        const accA = a.accuracy || 0;
+                        const accB = b.accuracy || 0;
+                        if (accA !== accB) return accB - accA;
+                        
+                        const timeA = a.timeTaken || 0;
+                        const timeB = b.timeTaken || 0;
+                        return timeA - timeB;
+                    });
+                } else {
+                    return stats.filter(stat => {
+                        const pName = stat.playerName || "";
+                        const currentPName = playerName || "";
+                        return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
+                    });
+                }
+            }, [statsData, isTeacherMode, playerName]);
 
             let currentIndex = 0;
             for (let i = 0; i < typedStr.length; i++) {
