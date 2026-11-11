@@ -177,7 +177,6 @@
             ]}
         ];
 
-        // THÊM CHỈ DẪN NGÓN TAY CHO PHÍM SHIFT
         const CuteHand = ({ isLeft, expectedFingerName, expectedShiftFingerName }) => {
             const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
             const getFill = (fingerName) => {
@@ -191,7 +190,7 @@
                     if (fingerName === 'Ngón trỏ') return '#69db7c';    
                 }
                 
-                // Tô màu ngón tay bấm phím Shift (Luôn là màu của ngón út)
+                // ĐÂY LÀ ĐIỂM SỬA LỖI: Tô màu ngón tay giữ phím Shift (ngón út)
                 if (expectedShiftFingerName === fullTargetName) {
                     return '#ffa94d'; 
                 }
@@ -255,12 +254,10 @@
             ]
         ];
 
-        // LOGIC PHÂN TÍCH TAY TRÁI PHẢI ĐỂ CHỈ ĐỊNH PHÍM SHIFT ĐỐI DIỆN
         const getFingerSuggestion = (char) => {
             if (!char) return null;
             if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-", isUpper: false, shiftName: null };
             
-            // Nhận diện xem có phải là chữ in hoa không
             const isUpper = char !== char.toLowerCase() && /[A-Z]/.test(char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'));
             const normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
@@ -281,7 +278,6 @@
             
             let shiftName = null;
             if (isUpper) {
-                // Nếu phím chính ở tay trái, Shift ở ngón út tay phải và ngược lại
                 if (name.includes('tay trái')) {
                     shiftName = 'Ngón út tay phải';
                 } else {
@@ -308,7 +304,6 @@
             const [statsData, setStatsData] = React.useState([]);
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
-            // Xử lý Active key cho cả Shift trái và phải
             const [activeKey, setActiveKey] = React.useState(null); 
             const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
             
@@ -661,6 +656,7 @@
 
                     <div className="bg-[#e5e7eb] w-full flex justify-between items-end z-20 relative border-t border-gray-300">
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
+                            {/* Đã bổ sung biến expectedShiftFingerName vào thẻ CuteHand để bật màu ngón tay giữ Shift */}
                             <CuteHand isLeft={true} expectedFingerName={fingerInfo ? fingerInfo.name : null} expectedShiftFingerName={fingerInfo ? fingerInfo.shiftName : null} />
                         </div>
 
@@ -668,11 +664,9 @@
                             {keyboardLayout.map((row, rowIndex) => (
                                 <div key={rowIndex} className="flex gap-1 justify-center">
                                     {row.map((btn, btnIndex) => {
-                                        // Quy đổi chữ hiển thị thành chữ cơ bản để highlight phím
                                         const expectedBase = currentExpectedChar ? currentExpectedChar.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() : '';
                                         const isUpper = currentExpectedChar && currentExpectedChar !== currentExpectedChar.toLowerCase() && /[a-zA-Z]/.test(expectedBase);
                                         
-                                        // Xác định phím Shift nào cần phát sáng
                                         let targetShiftKey = null;
                                         if (isUpper && fingerInfo) {
                                             targetShiftKey = fingerInfo.shiftName === 'Ngón út tay phải' ? 'Shift_R' : 'Shift';
@@ -686,7 +680,6 @@
                                         
                                         const isExpected = isExpectedBase || isExpectedShift;
                                         
-                                        // Xác định phím đang được bấm
                                         let isPressed = false;
                                         if (activeKey) {
                                             if (activeKey.toLowerCase() === 'shift') {
@@ -711,6 +704,7 @@
                         </div>
 
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
+                            {/* Đã bổ sung biến expectedShiftFingerName vào thẻ CuteHand để bật màu ngón tay giữ Shift */}
                             <CuteHand isLeft={false} expectedFingerName={fingerInfo ? fingerInfo.name : null} expectedShiftFingerName={fingerInfo ? fingerInfo.shiftName : null} />
                         </div>
                     </div>
