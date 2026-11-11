@@ -63,7 +63,7 @@
             transition: all 0.1s; border-radius: 4px;
         }
         .typing-char.size-lg { min-width: 40px; height: 60px; font-size: 3.75rem; margin: 4px 2px; }
-        .typing-char.size-sm { min-width: 22px; height: 42px; font-size: 2rem; margin: 4px 1px; }
+        .typing-char.size-sm { min-width: 22px; height: 42px; font-size: 2.2rem; margin: 4px 1px; }
         
         .typing-char.current { border: 3px solid #1e293b; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
         .typing-char.size-sm.current { border-width: 2px; }
@@ -113,12 +113,8 @@
                 super(props);
                 this.state = { hasError: false, errorInfo: null };
             }
-            static getDerivedStateFromError(error) {
-                return { hasError: true };
-            }
-            componentDidCatch(error, errorInfo) {
-                this.setState({ errorInfo: error.toString() });
-            }
+            static getDerivedStateFromError(error) { return { hasError: true }; }
+            componentDidCatch(error, errorInfo) { this.setState({ errorInfo: error.toString() }); }
             render() {
                 if (this.state.hasError) {
                     return (
@@ -156,40 +152,33 @@
             isOffline = true;
         }
 
+        // BỘ DỮ LIỆU ĐÃ ĐƯỢC GẮN CỜ TỰ ĐỘNG CHUYỂN CHẾ ĐỘ CÓ DẤU HOẶC KHÔNG DẤU
         const lessons = [
-            { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;", loops: 3 },
-            { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p", loops: 3 },
-            { id: 3, title: "Bài 3: Hàng phím dưới", text: "z x c v b n m , . /", loops: 3 },
-            { id: 4, title: "Bài 4: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0", loops: 3 },
+            { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;", loops: 3, mode: 'EN' },
+            { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p", loops: 3, mode: 'EN' },
+            { id: 3, title: "Bài 3: Hàng phím dưới", text: "z x c v b n m , . /", loops: 3, mode: 'EN' },
+            { id: 4, title: "Bài 4: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0", loops: 3, mode: 'EN' },
             { id: 5, title: "Bài 5: Tổng hợp", texts: [
-                "a q z s w x d e c f r v", 
-                "; p / l o . k i , j u m",
-                "a q z s w x d e c f r v", 
-                "; p / l o . k i , j u m",
-                "a q z s w x d e c f r v", 
-                "; p / l o . k i , j u m"
-            ]},
+                "a q z s w x d e c f r v", "; p / l o . k i , j u m", 
+                "a q z s w x d e c f r v", "; p / l o . k i , j u m", 
+                "a q z s w x d e c f r v", "; p / l o . k i , j u m"
+            ], mode: 'EN' },
             { id: 6, title: "Bài 6: CĐ Gia đình", texts: [
-                "ba me yeu em",
-                "em yeu gia dinh",
-                "ban be vui ve",
-                "cung nhau di choi",
-                "chia se do choi"
-            ]},
+                "ba me yeu em", "em yeu gia dinh", "ban be vui ve", "cung nhau di choi", "chia se do choi"
+            ], mode: 'EN' },
             { id: 7, title: "Bài 7: CĐ Trường lớp", texts: [
-                "truong cua em dep",
-                "co giao hien hoa",
-                "sach vo thom tho",
-                "chuong reo vao lop",
-                "ra choi san truong"
-            ]},
+                "truong cua em dep", "co giao hien hoa", "sach vo thom tho", "chuong reo vao lop", "ra choi san truong"
+            ], mode: 'EN' },
             { id: 8, title: "Bài 8: CĐ Thiên nhiên", texts: [
-                "chu meo de thuong",
-                "cho con giu nha",
-                "bong hoa no ro",
-                "bau troi trong xanh",
-                "chim hot liu lo"
-            ]}
+                "chu meo de thuong", "cho con giu nha", "bong hoa no ro", "bau troi trong xanh", "chim hot liu lo"
+            ], mode: 'EN' },
+            { id: 9, title: "Bài 9: Luyện tập 1", texts: [
+                "Yêu Tổ quốc, yêu đồng bào",
+                "Học tập tốt, lao động tốt",
+                "Đoàn kết tốt, kỷ luật tốt",
+                "Giữ gìn vệ sinh thật tốt",
+                "Khiêm tốn, thật thà, dũng cảm"
+            ], mode: 'VI' }
         ];
 
         const CuteHand = ({ isLeft, expectedFingerName }) => {
@@ -261,9 +250,13 @@
             ]
         ];
 
+        // TỰ ĐỘNG CHUYỂN ĐỔI CHỮ TIẾNG VIỆT THÀNH CHỮ GỐC ĐỂ CHỈ ĐÚNG NGÓN TAY VÀ TÔ MÀU BÀN PHÍM
         const getFingerSuggestion = (char) => {
+            if (!char) return null;
             if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-" };
-            const c = char ? char.toLowerCase() : "";
+            
+            const normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+
             const map = {
                 'q': 'Ngón út tay trái', 'a': 'Ngón út tay trái', 'z': 'Ngón út tay trái', '1': 'Ngón út tay trái',
                 'w': 'Ngón áp út tay trái', 's': 'Ngón áp út tay trái', 'x': 'Ngón áp út tay trái', '2': 'Ngón áp út tay trái',
@@ -276,8 +269,8 @@
                 'o': 'Ngón áp út tay phải', 'l': 'Ngón áp út tay phải', '.': 'Ngón áp út tay phải', '9': 'Ngón áp út tay phải',
                 'p': 'Ngón út tay phải', ';': 'Ngón út tay phải', '/': 'Ngón út tay phải', '0': 'Ngón út tay phải'
             };
-            const name = map[c] || "Ngón út tay phải";
-            return { name, letter: c };
+            const name = map[normalizedChar] || "Ngón út tay phải";
+            return { name, letter: normalizedChar };
         };
 
         function App() {
@@ -299,10 +292,12 @@
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
             
+            const errorTimeoutRef = React.useRef(null);
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
+            const isVietnamese = lesson.mode === 'VI';
 
             React.useEffect(() => {
                 if (!db) return;
@@ -325,15 +320,13 @@
                 const handleKeyDown = (e) => {
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
-                    // CHẶN TIÊU ĐIỂM CỦA SELECT ĐỂ TRÁNH LỖI NHẢY BÀI KHI GÕ CHỮ B
                     if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'BUTTON')) {
                         document.activeElement.blur();
                     }
 
-                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key)) return;
+                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace', 'Process', 'Unidentified'].includes(e.key)) return;
                     if (isFinished) return;
                     
-                    // Chặn phím không gây cuộn trang hay làm select box tự nhảy
                     if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
                         e.preventDefault();
                     }
@@ -357,6 +350,11 @@
 
                     if (e.key === expectedChar) {
                         setHasError(false); 
+                        if (errorTimeoutRef.current) {
+                            clearTimeout(errorTimeoutRef.current);
+                            errorTimeoutRef.current = null;
+                        }
+
                         if (currentIndex + 1 === currentText.length) {
                             if (currentLoop < maxLoops) {
                                 setCurrentLoop(prev => prev + 1);
@@ -381,9 +379,26 @@
                         }
                     } else {
                         setHasError(true);
-                        const newErrors = errors + 1;
-                        setErrors(newErrors);
-                        setAccuracy(Math.max(0, 100 - (newErrors * 5)));
+                        // BỘ LỌC THÔNG MINH CHO TELEX
+                        if (isVietnamese) {
+                            if (!errorTimeoutRef.current) {
+                                errorTimeoutRef.current = setTimeout(() => {
+                                    setErrors(prev => {
+                                        const newErr = prev + 1;
+                                        setAccuracy(Math.max(0, 100 - (newErr * 5)));
+                                        return newErr;
+                                    });
+                                    errorTimeoutRef.current = null;
+                                }, 300);
+                            }
+                        } else {
+                            // Bài không dấu trừ điểm ngay lập tức
+                            setErrors(prev => {
+                                const newErr = prev + 1;
+                                setAccuracy(Math.max(0, 100 - (newErr * 5)));
+                                return newErr;
+                            });
+                        }
                     }
                 };
 
@@ -394,7 +409,7 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops, isVietnamese]);
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -426,6 +441,10 @@
                 setIsFinished(false); 
                 setShowStats(false); 
                 setHasError(false);
+                if (errorTimeoutRef.current) {
+                    clearTimeout(errorTimeoutRef.current);
+                    errorTimeoutRef.current = null;
+                }
             };
 
             const handleNextLesson = () => {
@@ -485,7 +504,8 @@
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
-            const sizeClass = "size-lg";
+            // Tự động thu nhỏ cỡ chữ để vừa màn hình nếu câu quá dài (từ 25 ký tự trở lên)
+            const sizeClass = currentText.length >= 25 ? "size-sm" : "size-lg";
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
@@ -507,7 +527,8 @@
                             <div className="font-bold text-lg ml-2 flex items-center gap-2">
                                 ⌨️ Go
                             </div>
-                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')}`}>
+                            
+                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')} ml-4`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
                                     type="text" placeholder="Nhập tên của em..." 
@@ -530,7 +551,7 @@
                                 onChange={(e) => { 
                                     const selected = lessons.find(l => l.id.toString() === e.target.value);
                                     if(selected) { setLesson(selected); resetLesson(); }
-                                    e.target.blur(); // TỰ ĐỘNG BỎ CHỌN NGAY LẬP TỨC ĐỂ TRÁNH LỖI NHẢY BÀI
+                                    e.target.blur(); 
                                 }}
                             >
                                 {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
@@ -615,8 +636,10 @@
                             {keyboardLayout.map((row, rowIndex) => (
                                 <div key={rowIndex} className="flex gap-1 justify-center">
                                     {row.map((btn, btnIndex) => {
+                                        const expectedBase = currentExpectedChar ? currentExpectedChar.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() : '';
+                                        
                                         const isExpected = !isFinished && currentExpectedChar && btn.char && (
-                                            btn.char.toLowerCase() === currentExpectedChar.toLowerCase() || 
+                                            btn.char.toLowerCase() === expectedBase || 
                                             (currentExpectedChar === ' ' && btn.char === ' ')
                                         );
                                         const isPressed = activeKey && btn.char && (
