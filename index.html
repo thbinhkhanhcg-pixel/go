@@ -69,6 +69,13 @@
         .typing-char.size-sm.current { border-width: 2px; }
         .typing-char.done { color: rgba(255,255,255,0.5); }
         .typing-char.waiting { color: #000; }
+        
+        /* Hiệu ứng báo hiệu đang ghép dấu Tiếng Việt */
+        .typing-char.composing { 
+            color: #d97706; 
+            border-bottom: 4px dashed #f59e0b; 
+        }
+        
         .typing-char.error {
             border-color: #ef4444 !important; color: #ef4444; background-color: #fee2e2;
             animation: shake 0.3s ease-in-out;
@@ -77,13 +84,6 @@
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-4px); }
             40%, 80% { transform: translateX(4px); }
-        }
-        .animate-bounce-alert {
-            animation: bounceAlert 1s infinite;
-        }
-        @keyframes bounceAlert {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, -10px); }
         }
     </style>
 </head>
@@ -96,8 +96,7 @@
                 if (root && root.innerHTML.trim() === '') {
                     document.body.innerHTML = '<div style="background:#fef2f2; color:#991b1b; padding:40px; font-family:sans-serif; text-align:center; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">' +
                         '<h1 style="font-size:32px; margin-bottom:20px;">⚠️ LỖI KHÔNG THỂ KHỞI CHẠY GIAO DIỆN</h1>' +
-                        '<p style="font-size:20px; max-width:800px; line-height:1.6;"><b>Nguyên nhân 1:</b> Thầy/Cô đã <b>copy thiếu code</b> ở phần cuối cùng. Vui lòng quay lại chat, bấm nút <b>Copy</b> ở góc khung mã thay vì bôi đen thủ công rồi dán lại.</p>' +
-                        '<p style="font-size:20px; max-width:800px; line-height:1.6; margin-top:15px;"><b>Nguyên nhân 2:</b> GitHub đang mất vài phút để cập nhật code. Thầy/Cô vui lòng chờ 2 phút rồi nhấn nút bên dưới.</p>' +
+                        '<p style="font-size:20px; max-width:800px; line-height:1.6;"><b>Nguyên nhân:</b> GitHub đang mất vài phút để cập nhật code. Thầy/Cô vui lòng chờ 2 phút rồi nhấn nút bên dưới.</p>' +
                         '<button onclick="window.location.reload(true)" style="margin-top:30px; padding:15px 30px; font-size:20px; background-color:#dc2626; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">🔄 TẢI LẠI TRANG KHI ĐÃ ĐỢI 2 PHÚT</button>' +
                         '</div>';
                 }
@@ -109,10 +108,7 @@
 
     <script type="text/babel">
         class ErrorBoundary extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = { hasError: false, errorInfo: null };
-            }
+            constructor(props) { super(props); this.state = { hasError: false, errorInfo: null }; }
             static getDerivedStateFromError(error) { return { hasError: true }; }
             componentDidCatch(error, errorInfo) { this.setState({ errorInfo: error.toString() }); }
             render() {
@@ -152,7 +148,6 @@
             isOffline = true;
         }
 
-        // BỘ DỮ LIỆU ĐÃ ĐƯỢC GẮN CỜ TỰ ĐỘNG CHUYỂN CHẾ ĐỘ CÓ DẤU HOẶC KHÔNG DẤU
         const lessons = [
             { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;", loops: 3, mode: 'EN' },
             { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p", loops: 3, mode: 'EN' },
@@ -250,13 +245,11 @@
             ]
         ];
 
-        // TỰ ĐỘNG CHUYỂN ĐỔI CHỮ TIẾNG VIỆT THÀNH CHỮ GỐC ĐỂ CHỈ ĐÚNG NGÓN TAY VÀ TÔ MÀU BÀN PHÍM
         const getFingerSuggestion = (char) => {
             if (!char) return null;
             if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-" };
             
             const normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
-
             const map = {
                 'q': 'Ngón út tay trái', 'a': 'Ngón út tay trái', 'z': 'Ngón út tay trái', '1': 'Ngón út tay trái',
                 'w': 'Ngón áp út tay trái', 's': 'Ngón áp út tay trái', 'x': 'Ngón áp út tay trái', '2': 'Ngón áp út tay trái',
@@ -279,8 +272,10 @@
             const [showNameAlert, setShowNameAlert] = React.useState(false);     
             
             const [lesson, setLesson] = React.useState(lessons[0]);
-            const [currentIndex, setCurrentIndex] = React.useState(0);
             const [currentLoop, setCurrentLoop] = React.useState(1);
+            
+            // Core typing states
+            const [typedStr, setTypedStr] = React.useState("");
             
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
@@ -292,13 +287,28 @@
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
             
-            const errorTimeoutRef = React.useRef(null);
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
             const isVietnamese = lesson.mode === 'VI';
 
+            // Auto-focus hidden input mechanic
+            React.useEffect(() => {
+                const focusHiddenInput = (e) => {
+                    const tag = e.target.tagName;
+                    if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
+                        const hiddenInput = document.getElementById('hidden-typing-input');
+                        if (hiddenInput && !isFinished && isNameConfirmed) {
+                            hiddenInput.focus();
+                        }
+                    }
+                };
+                document.addEventListener('click', focusHiddenInput);
+                return () => document.removeEventListener('click', focusHiddenInput);
+            }, [isFinished, isNameConfirmed]);
+
+            // Database sync
             React.useEffect(() => {
                 if (!db) return;
                 const unsubscribe = db.collection("stats").orderBy("timestamp", "desc").limit(100).onSnapshot(snapshot => {
@@ -316,100 +326,83 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            React.useEffect(() => {
-                const handleKeyDown = (e) => {
-                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-                    
-                    if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'BUTTON')) {
-                        document.activeElement.blur();
-                    }
+            // Core Logic: Xử lý Hộp Nhập Liệu Ẩn hỗ trợ bộ gõ TELEX
+            const handleInputChange = (e) => {
+                const val = e.target.value;
 
-                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace', 'Process', 'Unidentified'].includes(e.key)) return;
-                    if (isFinished) return;
-                    
-                    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                        e.preventDefault();
-                    }
-                    
-                    if (!playerName || playerName.trim() === "") {
-                        setShowNameAlert(true);
-                        setTimeout(() => setShowNameAlert(false), 3500);
-                        return;
-                    }
-                    if (!isNameConfirmed) {
-                        setIsNameConfirmed(true);
-                        setShowNameAlert(false);
-                    }
+                if (!playerName || playerName.trim() === "") {
+                    setShowNameAlert(true);
+                    setTimeout(() => setShowNameAlert(false), 3500);
+                    return;
+                }
+                if (!isNameConfirmed) {
+                    setIsNameConfirmed(true);
+                    setShowNameAlert(false);
+                }
 
-                    if (e.key) {
-                        setActiveKey(e.key.toLowerCase());
+                if (!startTime) setStartTime(Date.now());
+
+                // Unikey gửi lệnh Backspace để xóa dấu hoặc sửa từ -> Chấp nhận ngay
+                if (val.length < typedStr.length) {
+                    setTypedStr(val);
+                    setHasError(false);
+                    return;
+                }
+
+                let isValid = true;
+                for (let i = 0; i < val.length; i++) {
+                    if (i >= currentText.length) {
+                        isValid = false; break;
                     }
-                    
-                    const expectedChar = currentText[currentIndex];
-                    if (currentIndex === 0 && currentLoop === 1 && !startTime) setStartTime(Date.now());
+                    if (val[i] !== currentText[i]) {
+                        // Nếu gõ không đúng chữ, kiểm tra xem có phải đang ghép dấu Tiếng Việt không
+                        if (isVietnamese && i === val.length - 1) {
+                            const tBase = currentText[i].normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+                            let vBase = val[i].normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+                            
+                            // Phím 'w' trong TELEX có thể tạo ra chữ 'ư' hoặc 'ơ'
+                            if (vBase === 'w' && (tBase === 'u' || tBase === 'ư' || tBase === 'o' || tBase === 'ơ')) vBase = tBase;
 
-                    if (e.key === expectedChar) {
-                        setHasError(false); 
-                        if (errorTimeoutRef.current) {
-                            clearTimeout(errorTimeoutRef.current);
-                            errorTimeoutRef.current = null;
-                        }
-
-                        if (currentIndex + 1 === currentText.length) {
-                            if (currentLoop < maxLoops) {
-                                setCurrentLoop(prev => prev + 1);
-                                setCurrentIndex(0);
-                            } else {
-                                setIsFinished(true);
-                                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-                                const finalAcc = Math.max(0, 100 - (errors * 5));
-                                if (db) {
-                                    db.collection("stats").add({
-                                        playerName: playerName || "Khách",
-                                        lessonTitle: lesson.title || "",
-                                        errors: errors || 0,
-                                        accuracy: finalAcc || 0,
-                                        timeTaken: timeTaken || 0,
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                    }).catch(err => console.log(err));
-                                }
+                            if (tBase === vBase) {
+                                continue; // Bỏ qua lỗi, đánh dấu là hợp lệ tạm thời (đang ghép dấu)
                             }
-                        } else {
-                            setCurrentIndex(currentIndex + 1);
                         }
-                    } else {
-                        setHasError(true);
-                        // BỘ LỌC THÔNG MINH CHO TELEX
-                        if (isVietnamese) {
-                            if (!errorTimeoutRef.current) {
-                                errorTimeoutRef.current = setTimeout(() => {
-                                    setErrors(prev => {
-                                        const newErr = prev + 1;
-                                        setAccuracy(Math.max(0, 100 - (newErr * 5)));
-                                        return newErr;
-                                    });
-                                    errorTimeoutRef.current = null;
-                                }, 300);
-                            }
+                        isValid = false;
+                        break;
+                    }
+                }
+
+                if (isValid) {
+                    setTypedStr(val);
+                    setHasError(false);
+
+                    if (val === currentText) {
+                        if (currentLoop < maxLoops) {
+                            setTypedStr("");
+                            setCurrentLoop(prev => prev + 1);
                         } else {
-                            // Bài không dấu trừ điểm ngay lập tức
-                            setErrors(prev => {
-                                const newErr = prev + 1;
-                                setAccuracy(Math.max(0, 100 - (newErr * 5)));
-                                return newErr;
-                            });
+                            setIsFinished(true);
+                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                            const finalAcc = Math.max(0, 100 - (errors * 5));
+                            if (db) {
+                                db.collection("stats").add({
+                                    playerName: playerName || "Khách",
+                                    lessonTitle: lesson.title || "",
+                                    errors: errors || 0,
+                                    accuracy: finalAcc || 0,
+                                    timeTaken: timeTaken || 0,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                }).catch(err => console.log(err));
+                            }
                         }
                     }
-                };
-
-                const handleKeyUp = () => setActiveKey(null);
-                window.addEventListener('keydown', handleKeyDown);
-                window.addEventListener('keyup', handleKeyUp);
-                return () => {
-                    window.removeEventListener('keydown', handleKeyDown);
-                    window.removeEventListener('keyup', handleKeyUp);
-                };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops, isVietnamese]);
+                } else {
+                    // Ký tự gõ hoàn toàn sai (không nằm trong quy tắc ghép dấu)
+                    setHasError(true);
+                    setErrors(prev => prev + 1);
+                    setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
+                }
+            };
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -433,7 +426,7 @@
             };
 
             const resetLesson = () => {
-                setCurrentIndex(0); 
+                setTypedStr(""); 
                 setCurrentLoop(1);
                 setErrors(0); 
                 setAccuracy(100); 
@@ -441,10 +434,10 @@
                 setIsFinished(false); 
                 setShowStats(false); 
                 setHasError(false);
-                if (errorTimeoutRef.current) {
-                    clearTimeout(errorTimeoutRef.current);
-                    errorTimeoutRef.current = null;
-                }
+                setTimeout(() => {
+                    const hiddenInput = document.getElementById('hidden-typing-input');
+                    if (hiddenInput) hiddenInput.focus();
+                }, 50);
             };
 
             const handleNextLesson = () => {
@@ -501,24 +494,37 @@
                     return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
                 });
 
+            // Tính toán vị trí con trỏ và gợi ý ngón tay
+            let currentIndex = 0;
+            for (let i = 0; i < typedStr.length; i++) {
+                if (typedStr[i] === currentText[i]) currentIndex++;
+                else break;
+            }
+
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
-            // Tự động thu nhỏ cỡ chữ để vừa màn hình nếu câu quá dài (từ 25 ký tự trở lên)
             const sizeClass = currentText.length >= 25 ? "size-sm" : "size-lg";
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
                     
+                    <input
+                        id="hidden-typing-input"
+                        type="text"
+                        value={typedStr}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => setActiveKey(e.key.toLowerCase())}
+                        onKeyUp={() => setActiveKey(null)}
+                        className="absolute top-0 left-0 w-0 h-0 opacity-0 z-[-1]"
+                        autoFocus
+                        autoComplete="off"
+                        spellCheck="false"
+                    />
+
                     {showNameAlert ? (
                         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700 w-max max-w-[90%] text-center">
                             ⚠️ Cảnh báo: Em hãy nhập tên của mình vào ô phía trên trước khi bắt đầu gõ nhé!
-                        </div>
-                    ) : null}
-
-                    {isOffline ? (
-                        <div className="bg-red-600 text-white text-center text-sm py-1 font-bold z-50 relative">
-                            ⚠️ Mất kết nối mạng. Học sinh luyện gõ bình thường nhưng điểm không được lưu lên máy chủ.
                         </div>
                     ) : null}
 
@@ -531,6 +537,7 @@
                             <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')} ml-4`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
+                                    id="playerNameInput"
                                     type="text" placeholder="Nhập tên của em..." 
                                     value={playerName} 
                                     onChange={(e) => {
@@ -546,7 +553,7 @@
                         </div>
                         <div className="flex gap-6 items-center text-sm">
                             <select 
-                                className="text-black px-2 py-1.5 rounded outline-none" 
+                                className="text-black px-2 py-1.5 rounded outline-none font-bold bg-yellow-100" 
                                 value={lesson.id} 
                                 onChange={(e) => { 
                                     const selected = lessons.find(l => l.id.toString() === e.target.value);
@@ -570,7 +577,7 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg relative">
+                    <div className="flex-1 ocean-bg relative" onClick={() => { const input = document.getElementById('hidden-typing-input'); if(input && isNameConfirmed) input.focus(); }}>
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
                         
@@ -605,10 +612,17 @@
                                 <div className="font-mono tracking-widest flex flex-wrap justify-center px-6 w-full lg:px-20">
                                     {currentText.split('').map((char, index) => {
                                         let statusClass = "waiting";
-                                        if (index < currentIndex) statusClass = "done";
-                                        if (index === currentIndex) {
+                                        
+                                        if (index < currentIndex) {
+                                            statusClass = "done";
+                                        } else if (index === currentIndex) {
                                             statusClass = hasError ? "current error" : "current";
+                                            // Đang ở trạng thái ghép dấu TELEX chưa hoàn thiện
+                                            if (typedStr.length > currentIndex && !hasError) {
+                                                statusClass += " composing";
+                                            }
                                         }
+                                        
                                         return (
                                             <span key={index} className={`typing-char ${sizeClass} ${statusClass}`}>
                                                 {char === ' ' ? '\u00A0' : char}
