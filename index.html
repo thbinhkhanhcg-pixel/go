@@ -372,9 +372,9 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
+            // LẮNG NGHE SỰ KIỆN TỪ HỆ ĐIỀU HÀNH ĐỂ TRỊ TẬN GỐC UNIKEY
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
-                    // Nếu đang nhập tên thì bỏ qua
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
@@ -382,10 +382,16 @@
                         return;
                     }
 
-                    // Cho phép các lệnh tắt của trình duyệt (Ctrl+R, F5, Alt+Tab...)
                     if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
                     
-                    // CHẶN HÀNH VI MẶC ĐỊNH ĐỂ NGĂN UNIKEY "ĂN" PHÍM W, S, F...
+                    // --- BẢN VÁ LỖI UNIKEY CHỮ W ---
+                    // KHÔNG chặn 'Process' và 'Unidentified' nữa, vì Unikey sẽ nhét phím W vào dạng này
+                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key) && !e.key.includes('Process')) return;
+                    
+                    // Bỏ qua các sự kiện ảo do Unikey tự sinh ra (chúng thường không mang mã mạch điện e.code)
+                    if (!e.code) return;
+
+                    // Chặn hành vi để Unikey không thể nhảy cóc
                     if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
                         e.preventDefault(); 
                     }
@@ -495,10 +501,7 @@
             };
             
             const clearAllData = async () => {
-                if (!db) {
-                    alert("Máy chủ đang ngoại tuyến, không thể xóa.");
-                    return;
-                }
+                if (!db) return alert("Máy chủ đang ngoại tuyến, không thể xóa.");
                 if (window.confirm("Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN toàn bộ lịch sử điểm trên máy chủ không?")) {
                     try {
                         const snapshot = await db.collection("stats").get();
@@ -673,7 +676,7 @@
                                         let statusClass = "waiting";
                                         if (index < currentIndex) statusClass = "done";
                                         else if (index === currentIndex) statusClass = hasError ? "current error" : "current";
-                                        return <span key={index} className={`typing-char ${statusClass}`}>{char === ' ' ? '\u00A0' : char}</span>;
+                                        return <span key={index} className={`typing-char ${sizeClass} ${statusClass}`}>{char === ' ' ? '\u00A0' : char}</span>;
                                     })}
                                 </div>
                             )}
@@ -737,7 +740,7 @@
                                         <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg text-sm border hover:bg-gray-200">
                                             <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">×</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">&times;</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
