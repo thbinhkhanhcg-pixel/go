@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 3 Dòng này giúp chống kẹt bộ nhớ đệm (Cache) vĩnh viễn -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -86,7 +85,6 @@
 </head>
 <body>
     
-    <!-- HỆ THỐNG CỨU HỘ: TRỊ DỨT ĐIỂM MÀN HÌNH XÁM -->
     <script>
         window.addEventListener('load', function() {
             setTimeout(function() {
@@ -131,11 +129,11 @@
         }
 
         const lessons = [
-            { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ; a s d f g h j k l ; a s d f g h j k l ;" },
-            { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p q w e r t y u i o p q w e r t y u i o p" },
-            { id: 3, title: "Bài 3: Hàng phím dưới", text: "z x c v b n m , . / z x c v b n m , . / z x c v b n m , . /" },
-            { id: 4, title: "Bài 4: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0" },
-            { id: 5, title: "Bài 5: Tổng hợp", text: "a q z s w x d e c f r v a q z s w x d e c f r v a q z s w x d e c f r v" }
+            { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;" },
+            { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p" },
+            { id: 3, title: "Bài 3: Hàng phím dưới", text: "z x c v b n m , . /" },
+            { id: 4, title: "Bài 4: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0" },
+            { id: 5, title: "Bài 5: Tổng hợp", text: "a q z s w x d e c f r v" }
         ];
 
         const CuteHand = ({ isLeft, expectedFingerName }) => {
@@ -231,7 +229,10 @@
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
             const [showNameAlert, setShowNameAlert] = React.useState(false);     
             const [lesson, setLesson] = React.useState(lessons[0]);
+            
             const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [currentLoop, setCurrentLoop] = React.useState(1);
+            
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
@@ -284,23 +285,28 @@
                         setActiveKey(e.key.toLowerCase());
                     }
                     const expectedChar = lesson.text[currentIndex];
-                    if (currentIndex === 0 && !startTime) setStartTime(Date.now());
+                    if (currentIndex === 0 && currentLoop === 1 && !startTime) setStartTime(Date.now());
 
                     if (e.key === expectedChar) {
                         setHasError(false); 
                         if (currentIndex + 1 === lesson.text.length) {
-                            setIsFinished(true);
-                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-                            const finalAcc = Math.max(0, 100 - (errors * 5));
-                            if (db) {
-                                db.collection("stats").add({
-                                    playerName: playerName || "Khách",
-                                    lessonTitle: lesson.title || "",
-                                    errors: errors || 0,
-                                    accuracy: finalAcc || 0,
-                                    timeTaken: timeTaken || 0,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                }).catch(err => console.log(err));
+                            if (currentLoop < 3) {
+                                setCurrentLoop(prev => prev + 1);
+                                setCurrentIndex(0);
+                            } else {
+                                setIsFinished(true);
+                                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                                const finalAcc = Math.max(0, 100 - (errors * 5));
+                                if (db) {
+                                    db.collection("stats").add({
+                                        playerName: playerName || "Khách",
+                                        lessonTitle: lesson.title || "",
+                                        errors: errors || 0,
+                                        accuracy: finalAcc || 0,
+                                        timeTaken: timeTaken || 0,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    }).catch(err => console.log(err));
+                                }
                             }
                         } else {
                             setCurrentIndex(currentIndex + 1);
@@ -320,7 +326,7 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop]);
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -344,7 +350,14 @@
             };
 
             const resetLesson = () => {
-                setCurrentIndex(0); setErrors(0); setAccuracy(100); setStartTime(null); setIsFinished(false); setShowStats(false); setHasError(false);
+                setCurrentIndex(0); 
+                setErrors(0); 
+                setAccuracy(100); 
+                setStartTime(null); 
+                setIsFinished(false); 
+                setShowStats(false); 
+                setHasError(false);
+                setCurrentLoop(1);
             };
 
             const handleNextLesson = () => {
@@ -447,6 +460,11 @@
                             }}>
                                 {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
                             </select>
+                            
+                            {!isFinished && (
+                                <span className="font-bold text-yellow-400 bg-gray-800 px-3 py-1 rounded">Lượt: {currentLoop}/3</span>
+                            )}
+                            
                             <span className="font-bold text-blue-400">Độ chính xác: {accuracy}%</span>
                             <button onClick={() => setShowStats(true)} className="bg-[#dcfce7] border border-[#22c55e] text-[#166534] px-4 py-1.5 rounded font-bold shadow-sm hover:bg-[#bbf7d0] transition flex items-center gap-2">
                                 📊 Thống kê
