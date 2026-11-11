@@ -335,7 +335,6 @@
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
             
-            // THAY THẾ BIẾN typedStr BẰNG currentIndex ĐỂ TRÁNH LỖI BACKSPACE CỦA UNIKEY
             const [currentIndex, setCurrentIndex] = React.useState(0);
             
             const [errors, setErrors] = React.useState(0);
@@ -346,6 +345,7 @@
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
             const [activeCode, setActiveCode] = React.useState(null); 
+            const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
             
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
@@ -354,6 +354,20 @@
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
+
+            React.useEffect(() => {
+                const focusHiddenInput = (e) => {
+                    const tag = e.target?.tagName;
+                    if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
+                        const hiddenInput = document.getElementById('hidden-typing-input');
+                        if (hiddenInput && !isFinished && isNameConfirmed) {
+                            hiddenInput.focus();
+                        }
+                    }
+                };
+                document.addEventListener('click', focusHiddenInput);
+                return () => document.removeEventListener('click', focusHiddenInput);
+            }, [isFinished, isNameConfirmed]);
 
             React.useEffect(() => {
                 if (!db) return;
@@ -372,31 +386,31 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            // THAY ĐỔI LỚN NHẤT: BẮT PHÍM HOÀN TOÀN BẰNG HARDWARE KEY CODE VÀ BỎ QUA UNIKEY
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
                     // Nếu đang nhập tên thì để trình duyệt tự xử lý
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
+                        e.preventDefault(); // CHẶN LẠI NGAY TẠI ĐÂY, TRÁNH LỌT PHÍM VÀO Ô NHẬP TÊN
                         setShowNameModal(true);
                         return;
                     }
 
-                    // Cho phép các phím tắt hệ thống (Ctrl, Alt, F5...)
                     if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
                     
-                    // CHẶN HÀNH VI MẶC ĐỊNH ĐỂ CẮT ĐỨT UNIKEY HOÀN TOÀN
+                    if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Enter', 'Backspace'].includes(e.key) && !e.key.includes('Process')) return;
+                    
+                    if (!e.code) return;
+
                     if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
                         e.preventDefault(); 
                     }
 
                     if (isFinished) return;
                     
-                    // Bỏ qua các sự kiện ảo không có mã phần cứng từ Unikey
-                    if (!e.code || e.code === 'Backspace') return; 
-
                     setActiveCode(e.code);
+                    setActiveKeyLocation(e.location);
 
                     const typedChar = getCharFromCode(e.code, e.shiftKey);
                     if (typedChar === null) return; 
@@ -427,7 +441,6 @@
                                 }
                             }
                         } else {
-                            // Chỉ tiến lên, không bao giờ lùi
                             setCurrentIndex(prev => prev + 1);
                         }
                     } else {
@@ -439,6 +452,7 @@
                 
                 const handleKeyUp = () => {
                     setActiveCode(null);
+                    setActiveKeyLocation(null);
                 };
 
                 window.addEventListener('keydown', handleKeyDown);
@@ -448,7 +462,6 @@
                     window.removeEventListener('keyup', handleKeyUp);
                 };
             }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
-
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
