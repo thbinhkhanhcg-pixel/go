@@ -372,10 +372,9 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            // LẮNG NGHE TRỰC TIẾP TỪ WINDOW ĐỂ CHẶN UNIKEY
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
-                    // Cho phép gõ tên trong ô input
+                    // Nếu đang nhập tên thì bỏ qua
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
@@ -383,10 +382,10 @@
                         return;
                     }
 
-                    // Bỏ qua các tổ hợp phím hệ thống
+                    // Cho phép các lệnh tắt của trình duyệt (Ctrl+R, F5, Alt+Tab...)
                     if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
                     
-                    // Chặn hành vi mặc định để chống Unikey giật phím
+                    // CHẶN HÀNH VI MẶC ĐỊNH ĐỂ NGĂN UNIKEY "ĂN" PHÍM W, S, F...
                     if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
                         e.preventDefault(); 
                     }
@@ -425,7 +424,7 @@
                                 }
                             }
                         } else {
-                            setCurrentIndex(currentIndex + 1);
+                            setCurrentIndex(prev => prev + 1);
                         }
                     } else {
                         setHasError(true);
@@ -446,7 +445,6 @@
                     window.removeEventListener('keyup', handleKeyUp);
                 };
             }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
-
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -567,6 +565,8 @@
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
+            const sizeClass = currentText.length >= 25 ? "size-sm" : "size-lg";
+
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
 
@@ -641,7 +641,7 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg relative">
+                    <div className="flex-1 ocean-bg relative" onClick={() => document.activeElement?.blur()}>
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
                         <div className="absolute top-10 left-20 text-6xl opacity-80">☁️</div>
@@ -737,7 +737,7 @@
                                         <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg text-sm border hover:bg-gray-200">
                                             <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">&times;</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">×</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
