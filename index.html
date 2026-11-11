@@ -185,6 +185,35 @@
             ]}
         ];
 
+        const getCharFromCode = (code, shiftKey) => {
+            const codeMap = {
+                'KeyA': 'a', 'KeyB': 'b', 'KeyC': 'c', 'KeyD': 'd', 'KeyE': 'e',
+                'KeyF': 'f', 'KeyG': 'g', 'KeyH': 'h', 'KeyI': 'i', 'KeyJ': 'j',
+                'KeyK': 'k', 'KeyL': 'l', 'KeyM': 'm', 'KeyN': 'n', 'KeyO': 'o',
+                'KeyP': 'p', 'KeyQ': 'q', 'KeyR': 'r', 'KeyS': 's', 'KeyT': 't',
+                'KeyU': 'u', 'KeyV': 'v', 'KeyW': 'w', 'KeyX': 'x', 'KeyY': 'y', 'KeyZ': 'z',
+                'Digit1': '1', 'Digit2': '2', 'Digit3': '3', 'Digit4': '4', 'Digit5': '5',
+                'Digit6': '6', 'Digit7': '7', 'Digit8': '8', 'Digit9': '9', 'Digit0': '0',
+                'Space': ' ', 'Comma': ',', 'Period': '.', 'Slash': '/', 'Semicolon': ';',
+                'Quote': "'", 'BracketLeft': '[', 'BracketRight': ']', 'Backslash': '\\',
+                'Minus': '-', 'Equal': '='
+            };
+
+            const shiftMap = {
+                '1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')',
+                ',': '<', '.': '>', '/': '?', ';': ':', "'": '"', '[': '{', ']': '}', '\\': '|', '-': '_', '=': '+'
+            };
+
+            let baseChar = codeMap[code];
+            if (!baseChar) return null;
+
+            if (shiftKey) {
+                if (/[a-z]/.test(baseChar)) return baseChar.toUpperCase();
+                return shiftMap[baseChar] || baseChar;
+            }
+            return baseChar;
+        };
+
         const CuteHand = ({ isLeft, expectedFingerName, expectedShiftFingerName }) => {
             const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
             const getFill = (fingerName) => {
@@ -306,7 +335,9 @@
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
             
-            const [typedStr, setTypedStr] = React.useState("");
+            // THAY THẾ BIẾN typedStr BẰNG currentIndex ĐỂ TRÁNH LỖI BACKSPACE CỦA UNIKEY
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
@@ -315,7 +346,6 @@
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
             const [activeCode, setActiveCode] = React.useState(null); 
-            const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
             
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
@@ -324,20 +354,6 @@
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
-
-            React.useEffect(() => {
-                const focusHiddenInput = (e) => {
-                    const tag = e.target?.tagName;
-                    if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
-                        const hiddenInput = document.getElementById('hidden-typing-input');
-                        if (hiddenInput && !isFinished && isNameConfirmed) {
-                            hiddenInput.focus();
-                        }
-                    }
-                };
-                document.addEventListener('click', focusHiddenInput);
-                return () => document.removeEventListener('click', focusHiddenInput);
-            }, [isFinished, isNameConfirmed]);
 
             React.useEffect(() => {
                 if (!db) return;
@@ -356,85 +372,73 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            const handleInputChange = (e) => {
-                const val = e.target.value;
-
-                if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
-                    setShowNameModal(true);
-                    return;
-                }
-
-                if (!startTime) setStartTime(Date.now());
-
-                // Nếu Unikey sửa chữ cái cuối (ví dụ w + w = w), val.length sẽ nhỏ hơn hoặc bằng typedStr.length
-                // Ta lập tức đồng ý và cập nhật lại chuỗi, hoàn toàn không gây lỗi
-                if (val.length <= typedStr.length) {
-                    setTypedStr(val);
-                    setHasError(false);
-                    return;
-                }
-
-                let isValid = true;
-                for (let i = 0; i < val.length; i++) {
-                    if (i >= currentText.length) { isValid = false; break; }
-                    if (val[i] !== currentText[i]) { isValid = false; break; }
-                }
-
-                if (isValid) {
-                    setTypedStr(val);
-                    setHasError(false);
-
-                    if (val === currentText) {
-                        if (currentLoop < maxLoops) {
-                            setTypedStr("");
-                            setCurrentLoop(prev => prev + 1);
-                        } else {
-                            setIsFinished(true);
-                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-                            const finalAcc = Math.max(0, 100 - (errors * 5));
-                            if (db) {
-                                db.collection("stats").add({
-                                    playerName: playerName,
-                                    lessonTitle: lesson.title,
-                                    errors: errors,
-                                    accuracy: finalAcc,
-                                    timeTaken: timeTaken,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                }).catch(err => console.log(err));
-                            }
-                        }
-                    }
-                } else {
-                    setHasError(true);
-                    // Chỉ cộng lỗi khi học sinh thực sự gõ thêm một ký tự sai
-                    if (val.length > typedStr.length) {
-                        setErrors(prev => prev + 1);
-                        setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
-                    }
-                }
-            };
-
+            // THAY ĐỔI LỚN NHẤT: BẮT PHÍM HOÀN TOÀN BẰNG HARDWARE KEY CODE VÀ BỎ QUA UNIKEY
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
-                    if (document.activeElement && document.activeElement.id === 'playerNameInput') return;
+                    // Nếu đang nhập tên thì để trình duyệt tự xử lý
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
                         setShowNameModal(true);
                         return;
                     }
 
+                    // Cho phép các phím tắt hệ thống (Ctrl, Alt, F5...)
                     if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
                     
+                    // CHẶN HÀNH VI MẶC ĐỊNH ĐỂ CẮT ĐỨT UNIKEY HOÀN TOÀN
+                    if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
+                        e.preventDefault(); 
+                    }
+
                     if (isFinished) return;
                     
-                    // Ghi nhận mã mạch điện để làm sáng bàn phím ảo
+                    // Bỏ qua các sự kiện ảo không có mã phần cứng từ Unikey
+                    if (!e.code || e.code === 'Backspace') return; 
+
                     setActiveCode(e.code);
-                    setActiveKeyLocation(e.location);
+
+                    const typedChar = getCharFromCode(e.code, e.shiftKey);
+                    if (typedChar === null) return; 
+
+                    if (!startTime) setStartTime(Date.now());
+
+                    const expectedChar = currentText[currentIndex];
+
+                    if (typedChar === expectedChar) {
+                        setHasError(false); 
+                        if (currentIndex + 1 === currentText.length) {
+                            if (currentLoop < maxLoops) {
+                                setCurrentLoop(prev => prev + 1);
+                                setCurrentIndex(0);
+                            } else {
+                                setIsFinished(true);
+                                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                                const finalAcc = Math.max(0, 100 - (errors * 5));
+                                if (db) {
+                                    db.collection("stats").add({
+                                        playerName: playerName,
+                                        lessonTitle: lesson.title,
+                                        errors: errors,
+                                        accuracy: finalAcc,
+                                        timeTaken: timeTaken,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    }).catch(err => console.log(err));
+                                }
+                            }
+                        } else {
+                            // Chỉ tiến lên, không bao giờ lùi
+                            setCurrentIndex(prev => prev + 1);
+                        }
+                    } else {
+                        setHasError(true);
+                        setErrors(prev => prev + 1);
+                        setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
+                    }
                 };
                 
                 const handleKeyUp = () => {
                     setActiveCode(null);
-                    setActiveKeyLocation(null);
                 };
 
                 window.addEventListener('keydown', handleKeyDown);
@@ -443,7 +447,8 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [isFinished, playerName, isNameConfirmed]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
+
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -466,7 +471,7 @@
             };
 
             const resetLesson = () => {
-                setTypedStr(""); 
+                setCurrentIndex(0); 
                 setCurrentLoop(1);
                 setErrors(0); 
                 setAccuracy(100); 
@@ -474,10 +479,6 @@
                 setIsFinished(false); 
                 setShowStats(false); 
                 setHasError(false);
-                setTimeout(() => {
-                    const hiddenInput = document.getElementById('hidden-typing-input');
-                    if (hiddenInput) hiddenInput.focus();
-                }, 50);
             };
 
             const handleNextLesson = () => {
@@ -562,12 +563,6 @@
                 document.body.removeChild(link);
             };
 
-            let currentIndex = 0;
-            for (let i = 0; i < typedStr.length; i++) {
-                if (typedStr[i] === currentText[i]) currentIndex++;
-                else break;
-            }
-
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
@@ -575,17 +570,6 @@
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
-
-                    <input
-                        id="hidden-typing-input"
-                        type="text" 
-                        value={typedStr}
-                        onChange={handleInputChange}
-                        className="absolute top-0 left-0 w-0 h-0 opacity-0 z-[-1]"
-                        autoFocus
-                        autoComplete="off"
-                        spellCheck="false"
-                    />
 
                     {showNameModal && (
                         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
@@ -658,7 +642,7 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg relative" onClick={() => { const input = document.getElementById('hidden-typing-input'); if(input && isNameConfirmed && !showNameModal) input.focus(); }}>
+                    <div className="flex-1 ocean-bg relative" onClick={() => document.activeElement?.blur()}>
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
                         <div className="absolute top-10 left-20 text-6xl opacity-80">☁️</div>
@@ -727,7 +711,6 @@
                                         }
                                         const isExpected = isExpectedBase || isExpectedShift;
                                         
-                                        // Bàn phím ảo phát sáng bằng cách quét mã Code (không bị ảnh hưởng bởi Unikey)
                                         const isPressed = activeCode === btn.code || (activeCode && activeCode.includes('Shift') && btn.code.includes('Shift') && activeCode === btn.code);
 
                                         const btnClasses = `key ${btn.class} ${isPressed ? 'active-typing' : ''} ${isExpected ? 'target-key' : ''}`;
