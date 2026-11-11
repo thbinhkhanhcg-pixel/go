@@ -10,12 +10,12 @@
     <title>Go - Luyện gõ phím</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/firebase@10.8.0/firebase-app-compat.js"></script>
-    <script src="https://unpkg.com/firebase@10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://unpkg.com/firebase@10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-app-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-auth-compat.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; margin: 0; background-color: #e5e7eb; }
@@ -58,15 +58,21 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
+        
+        /* Hiệu chỉnh tự động thu nhỏ cỡ chữ nếu đoạn văn dài */
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
-            min-width: 40px; height: 60px; margin: 0 2px; transition: all 0.1s;
+            transition: all 0.1s; border-radius: 4px;
         }
-        .typing-char.current { border: 3px solid #1e293b; border-radius: 4px; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
+        .typing-char.size-lg { min-width: 40px; height: 60px; font-size: 3.75rem; margin: 4px 2px; }
+        .typing-char.size-sm { min-width: 22px; height: 42px; font-size: 2rem; margin: 4px 1px; }
+        
+        .typing-char.current { border: 3px solid #1e293b; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
+        .typing-char.size-sm.current { border-width: 2px; }
         .typing-char.done { color: rgba(255,255,255,0.5); }
         .typing-char.waiting { color: #000; }
         .typing-char.error {
-            border-color: #ef4444; color: #ef4444; background-color: #fee2e2;
+            border-color: #ef4444 !important; color: #ef4444; background-color: #fee2e2;
             animation: shake 0.3s ease-in-out;
         }
         @keyframes shake {
@@ -128,12 +134,23 @@
             isOffline = true;
         }
 
+        // CẤU TRÚC GIÁO TRÌNH MỚI: TỰ ĐỘNG CHUYỂN TAY VÀ THÊM BÀI MỚI
         const lessons = [
             { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;" },
             { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p" },
             { id: 3, title: "Bài 3: Hàng phím dưới", text: "z x c v b n m , . /" },
             { id: 4, title: "Bài 4: Hàng phím số", text: "1 2 3 4 5 6 7 8 9 0" },
-            { id: 5, title: "Bài 5: Tổng hợp", text: "a q z s w x d e c f r v" }
+            { id: 5, title: "Bài 5: Tổng hợp", texts: [
+                "a q z s w x d e c f r v", 
+                "; p / l o . k i , j u m",
+                "a q z s w x d e c f r v", 
+                "; p / l o . k i , j u m",
+                "a q z s w x d e c f r v", 
+                "; p / l o . k i , j u m"
+            ], loops: 6 },
+            { id: 6, title: "Bài 6: CĐ Gia đình", text: "ba me yeu em em yeu gia dinh ban be vui ve cung nhau di choi chia se do choi" },
+            { id: 7, title: "Bài 7: CĐ Trường lớp", text: "truong cua em dep co giao hien hoa sach vo thom tho chuong reo vao lop ra choi san truong" },
+            { id: 8, title: "Bài 8: CĐ Thiên nhiên", text: "chu meo de thuong cho con giu nha bong hoa no ro bau troi trong xanh chim hot liu lo" }
         ];
 
         const CuteHand = ({ isLeft, expectedFingerName }) => {
@@ -228,8 +245,8 @@
             const [playerName, setPlayerName] = React.useState("");
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
             const [showNameAlert, setShowNameAlert] = React.useState(false);     
-            const [lesson, setLesson] = React.useState(lessons[0]);
             
+            const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentIndex, setCurrentIndex] = React.useState(0);
             const [currentLoop, setCurrentLoop] = React.useState(1);
             
@@ -245,12 +262,13 @@
             
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
+            // Xác định đoạn chữ cần hiển thị tùy theo việc bài này có nhiều biến thể hay không
+            const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
+            const maxLoops = lesson.loops || 3;
+
             React.useEffect(() => {
                 if (!db) return;
-                const unsubscribe = db.collection("stats")
-                                      .orderBy("timestamp", "desc")
-                                      .limit(100)
-                                      .onSnapshot(snapshot => {
+                const unsubscribe = db.collection("stats").orderBy("timestamp", "desc").limit(100).onSnapshot(snapshot => {
                     const data = snapshot.docs.map(doc => {
                         const docData = doc.data();
                         let timeMs = 0;
@@ -284,16 +302,19 @@
                     if (e.key) {
                         setActiveKey(e.key.toLowerCase());
                     }
-                    const expectedChar = lesson.text[currentIndex];
+                    
+                    const expectedChar = currentText[currentIndex];
                     if (currentIndex === 0 && currentLoop === 1 && !startTime) setStartTime(Date.now());
 
                     if (e.key === expectedChar) {
                         setHasError(false); 
-                        if (currentIndex + 1 === lesson.text.length) {
-                            if (currentLoop < 3) {
+                        if (currentIndex + 1 === currentText.length) {
+                            if (currentLoop < maxLoops) {
+                                // Chuyển sang lượt tiếp theo
                                 setCurrentLoop(prev => prev + 1);
                                 setCurrentIndex(0);
                             } else {
+                                // Đã hoàn thành tất cả các lượt
                                 setIsFinished(true);
                                 const timeTaken = Math.floor((Date.now() - startTime) / 1000);
                                 const finalAcc = Math.max(0, 100 - (errors * 5));
@@ -326,7 +347,7 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -351,13 +372,13 @@
 
             const resetLesson = () => {
                 setCurrentIndex(0); 
+                setCurrentLoop(1);
                 setErrors(0); 
                 setAccuracy(100); 
                 setStartTime(null); 
                 setIsFinished(false); 
                 setShowStats(false); 
                 setHasError(false);
-                setCurrentLoop(1);
             };
 
             const handleNextLesson = () => {
@@ -414,8 +435,11 @@
                     return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
                 });
 
-            const currentExpectedChar = isFinished ? null : lesson.text[currentIndex];
+            const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
+            
+            // Nếu chữ quá dài thì dùng size-sm để thu nhỏ lại cho vừa màn hình
+            const sizeClass = currentText.length > 30 ? "size-sm" : "size-lg";
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
@@ -462,7 +486,9 @@
                             </select>
                             
                             {!isFinished && (
-                                <span className="font-bold text-yellow-400 bg-gray-800 px-3 py-1 rounded">Lượt: {currentLoop}/3</span>
+                                <span className="font-bold text-yellow-400 bg-gray-800 px-3 py-1 rounded shadow-inner">
+                                    Lượt: {currentLoop}/{maxLoops}
+                                </span>
                             )}
                             
                             <span className="font-bold text-blue-400">Độ chính xác: {accuracy}%</span>
@@ -504,15 +530,15 @@
                                     </div>
                                 </div>
                             ) : (
-                                <div className="text-6xl font-mono tracking-[0.2em] flex flex-wrap justify-center px-10">
-                                    {lesson.text.split('').map((char, index) => {
+                                <div className="font-mono tracking-widest flex flex-wrap justify-center px-6 w-full lg:px-20">
+                                    {currentText.split('').map((char, index) => {
                                         let statusClass = "waiting";
                                         if (index < currentIndex) statusClass = "done";
                                         if (index === currentIndex) {
                                             statusClass = hasError ? "current error" : "current";
                                         }
                                         return (
-                                            <span key={index} className={`typing-char ${statusClass}`}>
+                                            <span key={index} className={`typing-char ${sizeClass} ${statusClass}`}>
                                                 {char === ' ' ? '\u00A0' : char}
                                             </span>
                                         );
