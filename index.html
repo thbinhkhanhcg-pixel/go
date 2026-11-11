@@ -58,7 +58,6 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
-        
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.1s; border-radius: 4px;
@@ -78,7 +77,6 @@
             40%, 80% { transform: translateX(4px); }
         }
         
-        /* Hiệu ứng Pop-in cho Khung nhập tên */
         @keyframes popIn {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -303,8 +301,6 @@
         function App() {
             const [playerName, setPlayerName] = React.useState("");
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
-            
-            // THAY THẾ BIẾN showNameAlert BẰNG showNameModal
             const [showNameModal, setShowNameModal] = React.useState(false);     
             
             const [lesson, setLesson] = React.useState(lessons[0]);
@@ -363,7 +359,6 @@
             const handleInputChange = (e) => {
                 const val = e.target.value;
 
-                // KIỂM TRA TÊN VÀ HIỂN THỊ MODAL NẾU CHƯA NHẬP TÊN
                 if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
                     setShowNameModal(true);
                     return;
@@ -415,7 +410,6 @@
             };
 
             const handleKeyDown = (e) => {
-                // KIỂM TRA TÊN VÀ HIỂN THỊ MODAL NẾU CHƯA NHẬP TÊN (DÀNH CHO TRƯỜNG HỢP GÕ NGOÀI Ô INPUT)
                 if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
                     if (document.activeElement && document.activeElement.tagName !== 'INPUT') {
                          setShowNameModal(true);
@@ -552,20 +546,21 @@
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
                     
+                    {/* KHÓA UNIKEY BẰNG TYPE="PASSWORD" VÀ THUỘC TÍNH BẢO MẬT */}
                     <input
                         id="hidden-typing-input"
-                        type="text"
+                        type="password"
                         value={typedStr}
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         onKeyUp={handleKeyUp}
                         className="absolute top-0 left-0 w-0 h-0 opacity-0 z-[-1]"
                         autoFocus
-                        autoComplete="off"
+                        autoComplete="new-password"
+                        data-lpignore="true"
                         spellCheck="false"
                     />
 
-                    {/* KHUNG MODAL NHẬP TÊN CHẶN MÀN HÌNH NẾU HỌC SINH CHƯA ĐIỀN */}
                     {showNameModal ? (
                         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
                             <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-6 max-w-md w-11/12 animate-pop-in border-4 border-blue-100">
@@ -796,7 +791,7 @@
                                             <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />
                                             Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold">×</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold">&times;</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
