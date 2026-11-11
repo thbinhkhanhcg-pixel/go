@@ -58,8 +58,6 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
-        
-        /* Hiệu chỉnh tự động thu nhỏ cỡ chữ nếu đoạn văn dài */
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.1s; border-radius: 4px;
@@ -134,7 +132,6 @@
             isOffline = true;
         }
 
-        // CẤU TRÚC GIÁO TRÌNH MỚI: TỰ ĐỘNG CHUYỂN TAY VÀ THÊM BÀI MỚI
         const lessons = [
             { id: 1, title: "Bài 1: Hàng phím cơ sở", text: "a s d f g h j k l ;" },
             { id: 2, title: "Bài 2: Hàng phím trên", text: "q w e r t y u i o p" },
@@ -147,10 +144,28 @@
                 "; p / l o . k i , j u m",
                 "a q z s w x d e c f r v", 
                 "; p / l o . k i , j u m"
-            ], loops: 6 },
-            { id: 6, title: "Bài 6: CĐ Gia đình", text: "ba me yeu em em yeu gia dinh ban be vui ve cung nhau di choi chia se do choi" },
-            { id: 7, title: "Bài 7: CĐ Trường lớp", text: "truong cua em dep co giao hien hoa sach vo thom tho chuong reo vao lop ra choi san truong" },
-            { id: 8, title: "Bài 8: CĐ Thiên nhiên", text: "chu meo de thuong cho con giu nha bong hoa no ro bau troi trong xanh chim hot liu lo" }
+            ]},
+            { id: 6, title: "Bài 6: CĐ Gia đình", texts: [
+                "ba me yeu em",
+                "em yeu gia dinh",
+                "ban be vui ve",
+                "cung nhau di choi",
+                "chia se do choi"
+            ]},
+            { id: 7, title: "Bài 7: CĐ Trường lớp", texts: [
+                "truong cua em dep",
+                "co giao hien hoa",
+                "sach vo thom tho",
+                "chuong reo vao lop",
+                "ra choi san truong"
+            ]},
+            { id: 8, title: "Bài 8: CĐ Thiên nhiên", texts: [
+                "chu meo de thuong",
+                "cho con giu nha",
+                "bong hoa no ro",
+                "bau troi trong xanh",
+                "chim hot liu lo"
+            ]}
         ];
 
         const CuteHand = ({ isLeft, expectedFingerName }) => {
@@ -262,9 +277,10 @@
             
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
-            // Xác định đoạn chữ cần hiển thị tùy theo việc bài này có nhiều biến thể hay không
+            // Xác định đoạn chữ cần hiển thị tùy theo việc bài này là mảng câu (texts) hay câu đơn (text)
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
-            const maxLoops = lesson.loops || 3;
+            // Số lượt hiển thị sẽ dựa trên số lượng phần tử trong mảng texts, mặc định là 3 cho bài đơn lẻ
+            const maxLoops = lesson.texts ? lesson.texts.length : 3;
 
             React.useEffect(() => {
                 if (!db) return;
@@ -310,7 +326,7 @@
                         setHasError(false); 
                         if (currentIndex + 1 === currentText.length) {
                             if (currentLoop < maxLoops) {
-                                // Chuyển sang lượt tiếp theo
+                                // Chuyển sang lượt (câu) tiếp theo
                                 setCurrentLoop(prev => prev + 1);
                                 setCurrentIndex(0);
                             } else {
@@ -438,8 +454,8 @@
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
-            // Nếu chữ quá dài thì dùng size-sm để thu nhỏ lại cho vừa màn hình
-            const sizeClass = currentText.length > 30 ? "size-sm" : "size-lg";
+            // Cỡ chữ lớn cho tất cả, vì mỗi lần chỉ hiện 1 câu ngắn gọn
+            const sizeClass = "size-lg";
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
@@ -659,7 +675,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
