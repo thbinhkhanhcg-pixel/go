@@ -58,6 +58,7 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
+        
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.1s; border-radius: 4px;
@@ -76,13 +77,13 @@
             20%, 60% { transform: translateX(-4px); }
             40%, 80% { transform: translateX(4px); }
         }
-        .animate-bounce-alert {
-            animation: bounceAlert 1s infinite;
+        
+        /* Hiệu ứng Pop-in cho Khung nhập tên */
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes bounceAlert {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, -10px); }
-        }
+        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body>
@@ -302,7 +303,9 @@
         function App() {
             const [playerName, setPlayerName] = React.useState("");
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
-            const [showNameAlert, setShowNameAlert] = React.useState(false);     
+            
+            // THAY THẾ BIẾN showNameAlert BẰNG showNameModal
+            const [showNameModal, setShowNameModal] = React.useState(false);     
             
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
@@ -360,14 +363,10 @@
             const handleInputChange = (e) => {
                 const val = e.target.value;
 
-                if (!playerName || playerName.trim() === "") {
-                    setShowNameAlert(true);
-                    setTimeout(() => setShowNameAlert(false), 3500);
+                // KIỂM TRA TÊN VÀ HIỂN THỊ MODAL NẾU CHƯA NHẬP TÊN
+                if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
+                    setShowNameModal(true);
                     return;
-                }
-                if (!isNameConfirmed) {
-                    setIsNameConfirmed(true);
-                    setShowNameAlert(false);
                 }
 
                 if (!startTime) setStartTime(Date.now());
@@ -416,6 +415,13 @@
             };
 
             const handleKeyDown = (e) => {
+                // KIỂM TRA TÊN VÀ HIỂN THỊ MODAL NẾU CHƯA NHẬP TÊN (DÀNH CHO TRƯỜNG HỢP GÕ NGOÀI Ô INPUT)
+                if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
+                    if (document.activeElement && document.activeElement.tagName !== 'INPUT') {
+                         setShowNameModal(true);
+                    }
+                }
+                
                 setActiveKey(e.key);
                 setActiveKeyLocation(e.location);
             };
@@ -428,7 +434,6 @@
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
                     setIsNameConfirmed(true);
-                    setShowNameAlert(false);
                 } else {
                     setIsNameConfirmed(false);
                 }
@@ -441,7 +446,7 @@
                     if (playerName && playerName.trim() !== "") {
                         e.target.blur();         
                     } else {
-                        setShowNameAlert(true);
+                        setShowNameModal(true);
                     }
                 }
             };
@@ -507,7 +512,6 @@
                 }
             };
 
-            // LOGIC SẮP XẾP BẢNG THỐNG KÊ KHI BẬT CHẾ ĐỘ GIÁO VIÊN
             const displayedStats = React.useMemo(() => {
                 let stats = [...statsData];
                 if (isTeacherMode) {
@@ -561,9 +565,47 @@
                         spellCheck="false"
                     />
 
-                    {showNameAlert ? (
-                        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-xl shadow-2xl font-bold text-xl z-50 animate-bounce-alert border-4 border-red-700 w-max max-w-[90%] text-center">
-                            ⚠️ Cảnh báo: Em hãy nhập tên của mình vào ô phía trên trước khi bắt đầu gõ nhé!
+                    {/* KHUNG MODAL NHẬP TÊN CHẶN MÀN HÌNH NẾU HỌC SINH CHƯA ĐIỀN */}
+                    {showNameModal ? (
+                        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
+                            <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-6 max-w-md w-11/12 animate-pop-in border-4 border-blue-100">
+                                <div className="text-6xl">👋</div>
+                                <h2 className="text-2xl font-bold text-gray-800 text-center">Chào em, em tên là gì nhỉ?</h2>
+                                <input 
+                                    type="text" 
+                                    placeholder="Nhập tên của em vào đây nhé..." 
+                                    value={playerName}
+                                    onChange={(e) => setPlayerName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && playerName.trim() !== '') {
+                                            setIsNameConfirmed(true);
+                                            setShowNameModal(false);
+                                            setTimeout(() => document.getElementById('hidden-typing-input')?.focus(), 50);
+                                        }
+                                    }}
+                                    className="w-full text-xl p-3 border-2 border-blue-400 rounded-xl outline-none focus:border-blue-600 font-bold text-center text-gray-800 shadow-inner"
+                                    autoFocus
+                                />
+                                <button 
+                                    onClick={() => {
+                                        if (playerName.trim() !== '') {
+                                            setIsNameConfirmed(true);
+                                            setShowNameModal(false);
+                                            setTimeout(() => document.getElementById('hidden-typing-input')?.focus(), 50);
+                                        }
+                                    }}
+                                    className={`w-full py-3 rounded-xl font-bold text-xl text-white transition shadow-md flex items-center justify-center gap-2 ${playerName.trim() !== '' ? 'bg-blue-500 hover:bg-blue-600 transform hover:-translate-y-1' : 'bg-gray-400 cursor-not-allowed'}`}
+                                    disabled={playerName.trim() === ''}
+                                >
+                                    🚀 Bắt đầu thực hành
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {isOffline ? (
+                        <div className="bg-red-600 text-white text-center text-sm py-1 font-bold z-50 relative">
+                            ⚠️ Mất kết nối mạng. Học sinh luyện gõ bình thường nhưng điểm không được lưu lên máy chủ.
                         </div>
                     ) : null}
 
@@ -573,7 +615,7 @@
                                 ⌨️ Go
                             </div>
                             
-                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${showNameAlert ? 'border-red-500' : (isNameConfirmed ? 'border-green-500' : 'border-transparent')} ml-4`}>
+                            <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${!isNameConfirmed ? 'border-transparent' : 'border-green-500'} ml-4`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
                                     id="playerNameInput"
@@ -582,7 +624,6 @@
                                     onChange={(e) => {
                                         setPlayerName(e.target.value);
                                         setIsNameConfirmed(false); 
-                                        if (showNameAlert) setShowNameAlert(false);
                                     }} 
                                     onBlur={handleNameBlur}
                                     onKeyDown={handleNameKeyDown}
@@ -616,7 +657,7 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg relative" onClick={() => { const input = document.getElementById('hidden-typing-input'); if(input && isNameConfirmed) input.focus(); }}>
+                    <div className="flex-1 ocean-bg relative" onClick={() => { const input = document.getElementById('hidden-typing-input'); if(input && isNameConfirmed && !showNameModal) input.focus(); }}>
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
                         
@@ -755,7 +796,7 @@
                                             <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />
                                             Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold">&times;</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold">×</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
