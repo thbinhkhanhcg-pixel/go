@@ -76,7 +76,6 @@
             20%, 60% { transform: translateX(-4px); }
             40%, 80% { transform: translateX(4px); }
         }
-        
         @keyframes popIn {
             0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -186,6 +185,36 @@
             ]}
         ];
 
+        // Lấy ký tự thực tế dựa trên Mã phần cứng (e.code) để chống lại Unikey
+        const getCharFromCode = (code, shiftKey) => {
+            const codeMap = {
+                'KeyA': 'a', 'KeyB': 'b', 'KeyC': 'c', 'KeyD': 'd', 'KeyE': 'e',
+                'KeyF': 'f', 'KeyG': 'g', 'KeyH': 'h', 'KeyI': 'i', 'KeyJ': 'j',
+                'KeyK': 'k', 'KeyL': 'l', 'KeyM': 'm', 'KeyN': 'n', 'KeyO': 'o',
+                'KeyP': 'p', 'KeyQ': 'q', 'KeyR': 'r', 'KeyS': 's', 'KeyT': 't',
+                'KeyU': 'u', 'KeyV': 'v', 'KeyW': 'w', 'KeyX': 'x', 'KeyY': 'y', 'KeyZ': 'z',
+                'Digit1': '1', 'Digit2': '2', 'Digit3': '3', 'Digit4': '4', 'Digit5': '5',
+                'Digit6': '6', 'Digit7': '7', 'Digit8': '8', 'Digit9': '9', 'Digit0': '0',
+                'Space': ' ', 'Comma': ',', 'Period': '.', 'Slash': '/', 'Semicolon': ';',
+                'Quote': "'", 'BracketLeft': '[', 'BracketRight': ']', 'Backslash': '\\',
+                'Minus': '-', 'Equal': '='
+            };
+
+            const shiftMap = {
+                '1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')',
+                ',': '<', '.': '>', '/': '?', ';': ':', "'": '"', '[': '{', ']': '}', '\\': '|', '-': '_', '=': '+'
+            };
+
+            let baseChar = codeMap[code];
+            if (!baseChar) return null;
+
+            if (shiftKey) {
+                if (/[a-z]/.test(baseChar)) return baseChar.toUpperCase();
+                return shiftMap[baseChar] || baseChar;
+            }
+            return baseChar;
+        };
+
         const CuteHand = ({ isLeft, expectedFingerName, expectedShiftFingerName }) => {
             const cuffColor = isLeft ? "#0ea5e9" : "#f97316";
             const getFill = (fingerName) => {
@@ -226,44 +255,45 @@
             );
         };
 
+        // Bổ sung mã `code` vào Layout để bàn phím ảo highlight đúng phím dù Unikey đang bật
         const keyboardLayout = [
             [
-                { char: '`', class: 'c-orange w-10 h-10' }, { char: '1', class: 'c-orange w-10 h-10' }, { char: '2', class: 'c-yellow w-10 h-10' }, 
-                { char: '3', class: 'c-blue w-10 h-10' }, { char: '4', class: 'c-orange w-10 h-10' }, { char: '5', class: 'c-orange w-10 h-10' }, 
-                { char: '6', class: 'c-green w-10 h-10' }, { char: '7', class: 'c-green w-10 h-10' }, { char: '8', class: 'c-blue w-10 h-10' }, 
-                { char: '9', class: 'c-yellow w-10 h-10' }, { char: '0', class: 'c-orange w-10 h-10' }, { char: '-', class: 'c-orange w-10 h-10' }, 
-                { char: '=', class: 'c-orange w-10 h-10' }, { char: 'Backspace', class: 'c-orange w-24 h-10 text-xs' }
+                { char: '`', code: 'Backquote', class: 'c-orange w-10 h-10' }, { char: '1', code: 'Digit1', class: 'c-orange w-10 h-10' }, { char: '2', code: 'Digit2', class: 'c-yellow w-10 h-10' }, 
+                { char: '3', code: 'Digit3', class: 'c-blue w-10 h-10' }, { char: '4', code: 'Digit4', class: 'c-orange w-10 h-10' }, { char: '5', code: 'Digit5', class: 'c-orange w-10 h-10' }, 
+                { char: '6', code: 'Digit6', class: 'c-green w-10 h-10' }, { char: '7', code: 'Digit7', class: 'c-green w-10 h-10' }, { char: '8', code: 'Digit8', class: 'c-blue w-10 h-10' }, 
+                { char: '9', code: 'Digit9', class: 'c-yellow w-10 h-10' }, { char: '0', code: 'Digit0', class: 'c-orange w-10 h-10' }, { char: '-', code: 'Minus', class: 'c-orange w-10 h-10' }, 
+                { char: '=', code: 'Equal', class: 'c-orange w-10 h-10' }, { char: 'Backspace', code: 'Backspace', class: 'c-orange w-24 h-10 text-xs' }
             ],
             [
-                { char: 'Tab', class: 'c-orange w-16 h-10 text-xs' }, { char: 'q', class: 'c-orange w-10 h-10 uppercase' }, { char: 'w', class: 'c-yellow w-10 h-10 uppercase' }, 
-                { char: 'e', class: 'c-blue w-10 h-10 uppercase' }, { char: 'r', class: 'c-orange w-10 h-10 uppercase' }, { char: 't', class: 'c-orange w-10 h-10 uppercase' }, 
-                { char: 'y', class: 'c-green w-10 h-10 uppercase' }, { char: 'u', class: 'c-green w-10 h-10 uppercase' }, { char: 'i', class: 'c-blue w-10 h-10 uppercase' }, 
-                { char: 'o', class: 'c-yellow w-10 h-10 uppercase' }, { char: 'p', class: 'c-orange w-10 h-10 uppercase' }, { char: '[', class: 'c-orange w-10 h-10' }, 
-                { char: ']', class: 'c-orange w-10 h-10' }, { char: '\\', class: 'c-orange w-14 h-10' }
+                { char: 'Tab', code: 'Tab', class: 'c-orange w-16 h-10 text-xs' }, { char: 'q', code: 'KeyQ', class: 'c-orange w-10 h-10 uppercase' }, { char: 'w', code: 'KeyW', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'e', code: 'KeyE', class: 'c-blue w-10 h-10 uppercase' }, { char: 'r', code: 'KeyR', class: 'c-orange w-10 h-10 uppercase' }, { char: 't', code: 'KeyT', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'y', code: 'KeyY', class: 'c-green w-10 h-10 uppercase' }, { char: 'u', code: 'KeyU', class: 'c-green w-10 h-10 uppercase' }, { char: 'i', code: 'KeyI', class: 'c-blue w-10 h-10 uppercase' }, 
+                { char: 'o', code: 'KeyO', class: 'c-yellow w-10 h-10 uppercase' }, { char: 'p', code: 'KeyP', class: 'c-orange w-10 h-10 uppercase' }, { char: '[', code: 'BracketLeft', class: 'c-orange w-10 h-10' }, 
+                { char: ']', code: 'BracketRight', class: 'c-orange w-10 h-10' }, { char: '\\', code: 'Backslash', class: 'c-orange w-14 h-10' }
             ],
             [
-                { char: 'CapsLock', class: 'c-orange w-20 h-10 text-xs' }, { char: 'a', class: 'c-orange w-10 h-10 uppercase' }, { char: 's', class: 'c-yellow w-10 h-10 uppercase' }, 
-                { char: 'd', class: 'c-blue w-10 h-10 uppercase' }, { char: 'f', class: 'c-orange w-10 h-10 uppercase' }, { char: 'g', class: 'c-orange w-10 h-10 uppercase' }, 
-                { char: 'h', class: 'c-green w-10 h-10 uppercase' }, { char: 'j', class: 'c-green w-10 h-10 uppercase' }, { char: 'k', class: 'c-blue w-10 h-10 uppercase' }, 
-                { char: 'l', class: 'c-yellow w-10 h-10 uppercase' }, { char: ';', class: 'c-orange w-10 h-10' }, { char: "'", class: 'c-orange w-10 h-10' }, 
-                { char: 'Enter', class: 'c-orange w-20 h-10 text-xs' }
+                { char: 'CapsLock', code: 'CapsLock', class: 'c-orange w-20 h-10 text-xs' }, { char: 'a', code: 'KeyA', class: 'c-orange w-10 h-10 uppercase' }, { char: 's', code: 'KeyS', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'd', code: 'KeyD', class: 'c-blue w-10 h-10 uppercase' }, { char: 'f', code: 'KeyF', class: 'c-orange w-10 h-10 uppercase' }, { char: 'g', code: 'KeyG', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'h', code: 'KeyH', class: 'c-green w-10 h-10 uppercase' }, { char: 'j', code: 'KeyJ', class: 'c-green w-10 h-10 uppercase' }, { char: 'k', code: 'KeyK', class: 'c-blue w-10 h-10 uppercase' }, 
+                { char: 'l', code: 'KeyL', class: 'c-yellow w-10 h-10 uppercase' }, { char: ';', code: 'Semicolon', class: 'c-orange w-10 h-10' }, { char: "'", code: 'Quote', class: 'c-orange w-10 h-10' }, 
+                { char: 'Enter', code: 'Enter', class: 'c-orange w-20 h-10 text-xs' }
             ],
             [
-                { char: 'Shift', class: 'c-orange w-28 h-10 text-xs' }, { char: 'z', class: 'c-orange w-10 h-10 uppercase' }, { char: 'x', class: 'c-yellow w-10 h-10 uppercase' }, 
-                { char: 'c', class: 'c-blue w-10 h-10 uppercase' }, { char: 'v', class: 'c-orange w-10 h-10 uppercase' }, { char: 'b', class: 'c-orange w-10 h-10 uppercase' }, 
-                { char: 'n', class: 'c-green w-10 h-10 uppercase' }, { char: 'm', class: 'c-green w-10 h-10 uppercase' }, { char: ',', class: 'c-yellow w-10 h-10' }, 
-                { char: '.', class: 'c-orange w-10 h-10' }, { char: '/', class: 'c-orange w-10 h-10' }, { char: 'Shift_R', label: 'Shift', class: 'c-orange w-24 h-10 text-xs' }
+                { char: 'Shift', code: 'ShiftLeft', class: 'c-orange w-28 h-10 text-xs' }, { char: 'z', code: 'KeyZ', class: 'c-orange w-10 h-10 uppercase' }, { char: 'x', code: 'KeyX', class: 'c-yellow w-10 h-10 uppercase' }, 
+                { char: 'c', code: 'KeyC', class: 'c-blue w-10 h-10 uppercase' }, { char: 'v', code: 'KeyV', class: 'c-orange w-10 h-10 uppercase' }, { char: 'b', code: 'KeyB', class: 'c-orange w-10 h-10 uppercase' }, 
+                { char: 'n', code: 'KeyN', class: 'c-green w-10 h-10 uppercase' }, { char: 'm', code: 'KeyM', class: 'c-green w-10 h-10 uppercase' }, { char: ',', code: 'Comma', class: 'c-yellow w-10 h-10' }, 
+                { char: '.', code: 'Period', class: 'c-orange w-10 h-10' }, { char: '/', code: 'Slash', class: 'c-orange w-10 h-10' }, { char: 'Shift', label: 'Shift', code: 'ShiftRight', class: 'c-orange w-24 h-10 text-xs' }
             ],
             [
-                { char: 'Ctrl', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Win', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Alt', class: 'c-yellow w-12 h-10 text-xs' }, 
-                { char: ' ', label: 'SPACE', class: 'c-yellow w-[300px] h-10 text-xs' }, 
-                { char: 'AltGr', class: 'c-yellow w-12 h-10 text-xs' }, { char: 'Win_R', label: 'Win', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Menu', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Ctrl_R', label: 'Ctrl', class: 'c-orange w-12 h-10 text-xs' }
+                { char: 'Ctrl', code: 'ControlLeft', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Win', code: 'MetaLeft', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Alt', code: 'AltLeft', class: 'c-yellow w-12 h-10 text-xs' }, 
+                { char: ' ', label: 'SPACE', code: 'Space', class: 'c-yellow w-[300px] h-10 text-xs' }, 
+                { char: 'AltGr', code: 'AltRight', class: 'c-yellow w-12 h-10 text-xs' }, { char: 'Win', label: 'Win', code: 'MetaRight', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Menu', code: 'ContextMenu', class: 'c-orange w-12 h-10 text-xs' }, { char: 'Ctrl', label: 'Ctrl', code: 'ControlRight', class: 'c-orange w-12 h-10 text-xs' }
             ]
         ];
 
         const getFingerSuggestion = (char) => {
             if (!char) return null;
-            if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-", isUpper: false, shiftName: null };
+            if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-", isUpper: false, shiftName: null, baseCode: 'Space' };
             
             let normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
             let isUpper = char !== char.toLowerCase() && /[a-z]/i.test(normalizedChar);
@@ -272,19 +302,20 @@
             if (char === '!') { normalizedChar = '1'; isUpper = true; }
 
             const map = {
-                'q': 'Ngón út tay trái', 'a': 'Ngón út tay trái', 'z': 'Ngón út tay trái', '1': 'Ngón út tay trái',
-                'w': 'Ngón áp út tay trái', 's': 'Ngón áp út tay trái', 'x': 'Ngón áp út tay trái', '2': 'Ngón áp út tay trái',
-                'e': 'Ngón giữa tay trái', 'd': 'Ngón giữa tay trái', 'c': 'Ngón giữa tay trái', '3': 'Ngón giữa tay trái',
-                'r': 'Ngón trỏ tay trái', 'f': 'Ngón trỏ tay trái', 'v': 'Ngón trỏ tay trái', '4': 'Ngón trỏ tay trái',
-                't': 'Ngón trỏ tay trái', 'g': 'Ngón trỏ tay trái', 'b': 'Ngón trỏ tay trái', '5': 'Ngón trỏ tay trái',
-                'y': 'Ngón trỏ tay phải', 'h': 'Ngón trỏ tay phải', 'n': 'Ngón trỏ tay phải', '6': 'Ngón trỏ tay phải',
-                'u': 'Ngón trỏ tay phải', 'j': 'Ngón trỏ tay phải', 'm': 'Ngón trỏ tay phải', '7': 'Ngón trỏ tay phải',
-                'i': 'Ngón giữa tay phải', 'k': 'Ngón giữa tay phải', ',': 'Ngón giữa tay phải', '8': 'Ngón giữa tay phải',
-                'o': 'Ngón áp út tay phải', 'l': 'Ngón áp út tay phải', '.': 'Ngón áp út tay phải', '9': 'Ngón áp út tay phải',
-                'p': 'Ngón út tay phải', ';': 'Ngón út tay phải', '/': 'Ngón út tay phải', '0': 'Ngón út tay phải'
+                'q': { finger: 'Ngón út tay trái', code: 'KeyQ' }, 'a': { finger: 'Ngón út tay trái', code: 'KeyA' }, 'z': { finger: 'Ngón út tay trái', code: 'KeyZ' }, '1': { finger: 'Ngón út tay trái', code: 'Digit1' },
+                'w': { finger: 'Ngón áp út tay trái', code: 'KeyW' }, 's': { finger: 'Ngón áp út tay trái', code: 'KeyS' }, 'x': { finger: 'Ngón áp út tay trái', code: 'KeyX' }, '2': { finger: 'Ngón áp út tay trái', code: 'Digit2' },
+                'e': { finger: 'Ngón giữa tay trái', code: 'KeyE' }, 'd': { finger: 'Ngón giữa tay trái', code: 'KeyD' }, 'c': { finger: 'Ngón giữa tay trái', code: 'KeyC' }, '3': { finger: 'Ngón giữa tay trái', code: 'Digit3' },
+                'r': { finger: 'Ngón trỏ tay trái', code: 'KeyR' }, 'f': { finger: 'Ngón trỏ tay trái', code: 'KeyF' }, 'v': { finger: 'Ngón trỏ tay trái', code: 'KeyV' }, '4': { finger: 'Ngón trỏ tay trái', code: 'Digit4' },
+                't': { finger: 'Ngón trỏ tay trái', code: 'KeyT' }, 'g': { finger: 'Ngón trỏ tay trái', code: 'KeyG' }, 'b': { finger: 'Ngón trỏ tay trái', code: 'KeyB' }, '5': { finger: 'Ngón trỏ tay trái', code: 'Digit5' },
+                'y': { finger: 'Ngón trỏ tay phải', code: 'KeyY' }, 'h': { finger: 'Ngón trỏ tay phải', code: 'KeyH' }, 'n': { finger: 'Ngón trỏ tay phải', code: 'KeyN' }, '6': { finger: 'Ngón trỏ tay phải', code: 'Digit6' },
+                'u': { finger: 'Ngón trỏ tay phải', code: 'KeyU' }, 'j': { finger: 'Ngón trỏ tay phải', code: 'KeyJ' }, 'm': { finger: 'Ngón trỏ tay phải', code: 'KeyM' }, '7': { finger: 'Ngón trỏ tay phải', code: 'Digit7' },
+                'i': { finger: 'Ngón giữa tay phải', code: 'KeyI' }, 'k': { finger: 'Ngón giữa tay phải', code: 'KeyK' }, ',': { finger: 'Ngón giữa tay phải', code: 'Comma' }, '8': { finger: 'Ngón giữa tay phải', code: 'Digit8' },
+                'o': { finger: 'Ngón áp út tay phải', code: 'KeyO' }, 'l': { finger: 'Ngón áp út tay phải', code: 'KeyL' }, '.': { finger: 'Ngón áp út tay phải', code: 'Period' }, '9': { finger: 'Ngón áp út tay phải', code: 'Digit9' },
+                'p': { finger: 'Ngón út tay phải', code: 'KeyP' }, ';': { finger: 'Ngón út tay phải', code: 'Semicolon' }, '/': { finger: 'Ngón út tay phải', code: 'Slash' }, '0': { finger: 'Ngón út tay phải', code: 'Digit0' }
             };
             
-            const name = map[normalizedChar] || "Ngón út tay phải";
+            const info = map[normalizedChar] || { finger: "Ngón út tay phải", code: null };
+            const name = info.finger;
             
             let shiftName = null;
             if (isUpper) {
@@ -295,7 +326,7 @@
                 }
             }
 
-            return { name, letter: normalizedChar, isUpper, shiftName };
+            return { name, letter: normalizedChar, isUpper, shiftName, baseCode: info.code };
         };
 
         function App() {
@@ -306,7 +337,6 @@
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
             
-            const [typedStr, setTypedStr] = React.useState("");
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
@@ -314,8 +344,8 @@
             const [statsData, setStatsData] = React.useState([]);
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
-            const [activeKey, setActiveKey] = React.useState(null); 
-            const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
+            const [activeCode, setActiveCode] = React.useState(null); 
+            const [currentIndex, setCurrentIndex] = React.useState(0);
             
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
@@ -324,20 +354,6 @@
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
-
-            React.useEffect(() => {
-                const focusHiddenInput = (e) => {
-                    const tag = e.target?.tagName;
-                    if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
-                        const hiddenInput = document.getElementById('hidden-typing-input');
-                        if (hiddenInput && !isFinished && isNameConfirmed) {
-                            hiddenInput.focus();
-                        }
-                    }
-                };
-                document.addEventListener('click', focusHiddenInput);
-                return () => document.removeEventListener('click', focusHiddenInput);
-            }, [isFinished, isNameConfirmed]);
 
             React.useEffect(() => {
                 if (!db) return;
@@ -356,97 +372,79 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            const handleInputChange = (e) => {
-                const val = e.target.value;
-
-                if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
-                    setShowNameModal(true);
-                    return;
-                }
-
-                if (!startTime) setStartTime(Date.now());
-
-                if (val.length < typedStr.length) {
-                    setTypedStr(val);
-                    setHasError(false);
-                    return;
-                }
-
-                let isValid = true;
-                for (let i = 0; i < val.length; i++) {
-                    if (i >= currentText.length) { isValid = false; break; }
-                    if (val[i] !== currentText[i]) { isValid = false; break; }
-                }
-
-                if (isValid) {
-                    setTypedStr(val);
-                    setHasError(false);
-
-                    if (val === currentText) {
-                        if (currentLoop < maxLoops) {
-                            setTypedStr("");
-                            setCurrentLoop(prev => prev + 1);
-                        } else {
-                            setIsFinished(true);
-                            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-                            const finalAcc = Math.max(0, 100 - (errors * 5));
-                            if (db) {
-                                db.collection("stats").add({
-                                    playerName: playerName || "Khách",
-                                    lessonTitle: lesson.title || "",
-                                    errors: errors || 0,
-                                    accuracy: finalAcc || 0,
-                                    timeTaken: timeTaken || 0,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                }).catch(err => console.log(err));
-                            }
-                        }
-                    }
-                } else {
-                    setHasError(true);
-                    setErrors(prev => prev + 1);
-                    setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
-                }
-            };
-
-            const handleKeyDown = (e) => {
-                if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
-                    if (document.activeElement && document.activeElement.tagName !== 'INPUT') {
-                         setShowNameModal(true);
-                    }
-                }
-                
-                setActiveKey(e.key);
-                setActiveKeyLocation(e.location);
-            };
-            
-            const handleKeyUp = () => {
-                setActiveKey(null);
-                setActiveKeyLocation(null);
-            };
-
-            const handleNameBlur = () => {
-                if (playerName.trim() !== "") {
-                    setIsNameConfirmed(true);
-                } else {
-                    setIsNameConfirmed(false);
-                }
-            };
-
-            const handleNameKeyDown = (e) => {
-                if (e.key === 'Enter') {
-                    if (e.nativeEvent && (e.nativeEvent.isComposing || e.keyCode === 229)) return;
-                    e.preventDefault();
-                    if (playerName && playerName.trim() !== "") {
-                        e.target.blur();         
-                    } else {
+            // LẮNG NGHE MÃ PHẦN CỨNG BÀN PHÍM ĐỂ XÓA SỔ HOÀN TOÀN TÁC ĐỘNG CỦA UNIKEY
+            React.useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    
+                    if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
                         setShowNameModal(true);
+                        return;
                     }
-                }
-            };
+
+                    // Cho phép các tổ hợp phím trình duyệt như F5, Ctrl+R, Alt+Tab
+                    if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
+                    
+                    // Chặn hành vi mặc định của Unikey và trình duyệt nếu đó là phím gõ chữ/số/dấu
+                    if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
+                        e.preventDefault(); 
+                    }
+
+                    if (isFinished) return;
+                    setActiveCode(e.code);
+
+                    const typedChar = getCharFromCode(e.code, e.shiftKey);
+                    if (typedChar === null) return; // Không phải phím hợp lệ
+
+                    if (!startTime) setStartTime(Date.now());
+
+                    const expectedChar = currentText[currentIndex];
+
+                    if (typedChar === expectedChar) {
+                        setHasError(false); 
+                        if (currentIndex + 1 === currentText.length) {
+                            if (currentLoop < maxLoops) {
+                                setCurrentLoop(prev => prev + 1);
+                                setCurrentIndex(0);
+                            } else {
+                                setIsFinished(true);
+                                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                                const finalAcc = Math.max(0, 100 - (errors * 5));
+                                if (db) {
+                                    db.collection("stats").add({
+                                        playerName: playerName,
+                                        lessonTitle: lesson.title,
+                                        errors: errors,
+                                        accuracy: finalAcc,
+                                        timeTaken: timeTaken,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    }).catch(err => console.log(err));
+                                }
+                            }
+                        } else {
+                            setCurrentIndex(currentIndex + 1);
+                        }
+                    } else {
+                        setHasError(true);
+                        setErrors(prev => prev + 1);
+                        setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
+                    }
+                };
+                
+                const handleKeyUp = () => {
+                    setActiveCode(null);
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('keyup', handleKeyUp);
+                };
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
 
             const resetLesson = () => {
-                setTypedStr(""); 
+                setCurrentIndex(0); 
                 setCurrentLoop(1);
                 setErrors(0); 
                 setAccuracy(100); 
@@ -454,10 +452,6 @@
                 setIsFinished(false); 
                 setShowStats(false); 
                 setHasError(false);
-                setTimeout(() => {
-                    const hiddenInput = document.getElementById('hidden-typing-input');
-                    if (hiddenInput) hiddenInput.focus();
-                }, 50);
             };
 
             const handleNextLesson = () => {
@@ -478,10 +472,7 @@
             };
             
             const clearAllData = async () => {
-                if (!db) {
-                    alert("Máy chủ đang ngoại tuyến, không thể xóa.");
-                    return;
-                }
+                if (!db) return alert("Máy chủ đang ngoại tuyến, không thể xóa.");
                 if (window.confirm("Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN toàn bộ lịch sử điểm trên máy chủ không?")) {
                     try {
                         const snapshot = await db.collection("stats").get();
@@ -510,118 +501,76 @@
                 let stats = [...statsData];
                 if (isTeacherMode) {
                     return stats.sort((a, b) => {
-                        const matchA = (a.lessonTitle || "").match(/Bài (\d+)/i);
-                        const matchB = (b.lessonTitle || "").match(/Bài (\d+)/i);
-                        const numA = matchA ? parseInt(matchA[1], 10) : 999;
-                        const numB = matchB ? parseInt(matchB[1], 10) : 999;
-                        
+                        const numA = parseInt((a.lessonTitle || "").match(/Bài (\d+)/i)?.[1] || 999, 10);
+                        const numB = parseInt((b.lessonTitle || "").match(/Bài (\d+)/i)?.[1] || 999, 10);
                         if (numA !== numB) return numA - numB;
-                        
-                        const accA = a.accuracy || 0;
-                        const accB = b.accuracy || 0;
-                        if (accA !== accB) return accB - accA;
-                        
-                        const timeA = a.timeTaken || 0;
-                        const timeB = b.timeTaken || 0;
-                        return timeA - timeB;
+                        if ((a.accuracy || 0) !== (b.accuracy || 0)) return (b.accuracy || 0) - (a.accuracy || 0);
+                        return (a.timeTaken || 0) - (b.timeTaken || 0);
                     });
                 } else {
-                    return stats.filter(stat => {
-                        const pName = stat.playerName || "";
-                        const currentPName = playerName || "";
-                        return pName.toLowerCase() === currentPName.toLowerCase() && currentPName.trim() !== "";
-                    });
+                    return stats.filter(stat => (stat.playerName || "").toLowerCase() === playerName.toLowerCase() && playerName.trim() !== "");
                 }
             }, [statsData, isTeacherMode, playerName]);
 
-            let currentIndex = 0;
-            for (let i = 0; i < typedStr.length; i++) {
-                if (typedStr[i] === currentText[i]) currentIndex++;
-                else break;
-            }
+            // HÀM XUẤT FILE EXCEL (.CSV) CÓ BOM ĐỂ ĐỌC CHUẨN TIẾNG VIỆT
+            const exportToCSV = () => {
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Ký tự BOM giúp Excel nhận diện Tiếng Việt UTF-8
+                csvContent += "Thời gian,Tên Học Sinh,Bài tập,Số lỗi,Chính xác\n";
+
+                const statsToExport = isTeacherMode ? displayedStats : statsData.filter(stat => (stat.playerName || "").toLowerCase() === playerName.toLowerCase());
+
+                statsToExport.forEach(stat => {
+                    const timeStr = formatTime(stat.timeTaken);
+                    const name = `"${stat.playerName || ""}"`;
+                    const lesson = `"${stat.lessonTitle || ""}"`;
+                    const errors = stat.errors || 0;
+                    const acc = `"${stat.accuracy || 0}%"`;
+                    csvContent += `${timeStr},${name},${lesson},${errors},${acc}\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Thong_Ke_Go_Phim_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
 
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
-            
+
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
-                    
-                    {/* KHÓA UNIKEY BẰNG TYPE="PASSWORD" VÀ THUỘC TÍNH BẢO MẬT */}
-                    <input
-                        id="hidden-typing-input"
-                        type="password"
-                        value={typedStr}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
-                        onKeyUp={handleKeyUp}
-                        className="absolute top-0 left-0 w-0 h-0 opacity-0 z-[-1]"
-                        autoFocus
-                        autoComplete="new-password"
-                        data-lpignore="true"
-                        spellCheck="false"
-                    />
-
-                    {showNameModal ? (
+                    {showNameModal && (
                         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
                             <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-6 max-w-md w-11/12 animate-pop-in border-4 border-blue-100">
                                 <div className="text-6xl">👋</div>
                                 <h2 className="text-2xl font-bold text-gray-800 text-center">Chào em, em tên là gì nhỉ?</h2>
                                 <input 
-                                    type="text" 
-                                    placeholder="Nhập tên của em vào đây nhé..." 
-                                    value={playerName}
-                                    onChange={(e) => setPlayerName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && playerName.trim() !== '') {
-                                            setIsNameConfirmed(true);
-                                            setShowNameModal(false);
-                                            setTimeout(() => document.getElementById('hidden-typing-input')?.focus(), 50);
-                                        }
-                                    }}
-                                    className="w-full text-xl p-3 border-2 border-blue-400 rounded-xl outline-none focus:border-blue-600 font-bold text-center text-gray-800 shadow-inner"
-                                    autoFocus
+                                    type="text" placeholder="Nhập tên của em vào đây nhé..." 
+                                    value={playerName} onChange={(e) => setPlayerName(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && playerName.trim() !== '') setIsNameConfirmed(true); setShowNameModal(false); }}
+                                    className="w-full text-xl p-3 border-2 border-blue-400 rounded-xl outline-none focus:border-blue-600 font-bold text-center text-gray-800 shadow-inner" autoFocus
                                 />
                                 <button 
-                                    onClick={() => {
-                                        if (playerName.trim() !== '') {
-                                            setIsNameConfirmed(true);
-                                            setShowNameModal(false);
-                                            setTimeout(() => document.getElementById('hidden-typing-input')?.focus(), 50);
-                                        }
-                                    }}
-                                    className={`w-full py-3 rounded-xl font-bold text-xl text-white transition shadow-md flex items-center justify-center gap-2 ${playerName.trim() !== '' ? 'bg-blue-500 hover:bg-blue-600 transform hover:-translate-y-1' : 'bg-gray-400 cursor-not-allowed'}`}
+                                    onClick={() => { if (playerName.trim() !== '') { setIsNameConfirmed(true); setShowNameModal(false); } }}
+                                    className={`w-full py-3 rounded-xl font-bold text-xl text-white transition shadow-md ${playerName.trim() !== '' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'}`}
                                     disabled={playerName.trim() === ''}
-                                >
-                                    🚀 Bắt đầu thực hành
-                                </button>
+                                >🚀 Bắt đầu thực hành</button>
                             </div>
                         </div>
-                    ) : null}
-
-                    {isOffline ? (
-                        <div className="bg-red-600 text-white text-center text-sm py-1 font-bold z-50 relative">
-                            ⚠️ Mất kết nối mạng. Học sinh luyện gõ bình thường nhưng điểm không được lưu lên máy chủ.
-                        </div>
-                    ) : null}
+                    )}
 
                     <div className="bg-[#202124] text-white p-2 flex justify-between items-center shadow-md z-20 h-14">
                         <div className="flex items-center gap-4 h-full">
-                            <div className="font-bold text-lg ml-2 flex items-center gap-2">
-                                ⌨️ Go
-                            </div>
-                            
+                            <div className="font-bold text-lg ml-2 flex items-center gap-2">⌨️ Go</div>
                             <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${!isNameConfirmed ? 'border-transparent' : 'border-green-500'} ml-4`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
-                                    id="playerNameInput"
-                                    type="text" placeholder="Nhập tên của em..." 
-                                    value={playerName} 
-                                    onChange={(e) => {
-                                        setPlayerName(e.target.value);
-                                        setIsNameConfirmed(false); 
-                                    }} 
-                                    onBlur={handleNameBlur}
-                                    onKeyDown={handleNameKeyDown}
+                                    type="text" placeholder="Nhập tên của em..." value={playerName} 
+                                    onChange={(e) => { setPlayerName(e.target.value); setIsNameConfirmed(false); }} 
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && playerName.trim() !== '') { e.target.blur(); setIsNameConfirmed(true); } }}
                                     className="text-black outline-none border-none bg-transparent w-40 text-sm font-bold"
                                 />
                             </div>
@@ -652,10 +601,9 @@
                         </div>
                     </div>
 
-                    <div className="flex-1 ocean-bg relative" onClick={() => { const input = document.getElementById('hidden-typing-input'); if(input && isNameConfirmed && !showNameModal) input.focus(); }}>
+                    <div className="flex-1 ocean-bg relative">
                         <div className="bubble w-4 h-4 left-[20%] bottom-[10%]"></div>
                         <div className="bubble w-6 h-6 left-[70%] bottom-[40%] animation-delay-2000"></div>
-                        
                         <div className="absolute top-10 left-20 text-6xl opacity-80">☁️</div>
                         <div className="absolute top-16 right-32 text-6xl opacity-80">☁️</div>
                         <div className="absolute bottom-2 left-[5%] text-5xl z-10 opacity-90">🪸</div>
@@ -675,30 +623,17 @@
                                 <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6">
                                     <h2 className="text-3xl font-bold text-green-600">🎉 Tuyệt vời! Em đã hoàn thành bài tập!</h2>
                                     <div className="flex gap-4">
-                                        <button onClick={resetLesson} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
-                                            🔄 Gõ lại
-                                        </button>
-                                        <button onClick={handleNextLesson} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow transition text-xl flex items-center gap-2">
-                                            ⏭️ Bài tiếp
-                                        </button>
+                                        <button onClick={resetLesson} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">🔄 Gõ lại</button>
+                                        <button onClick={handleNextLesson} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow transition text-xl flex items-center gap-2">⏭️ Bài tiếp</button>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="font-mono tracking-widest flex flex-wrap justify-center px-6 w-full lg:px-20">
                                     {currentText.split('').map((char, index) => {
                                         let statusClass = "waiting";
-                                        
-                                        if (index < currentIndex) {
-                                            statusClass = "done";
-                                        } else if (index === currentIndex) {
-                                            statusClass = hasError ? "current error" : "current";
-                                        }
-                                        
-                                        return (
-                                            <span key={index} className={`typing-char ${statusClass}`}>
-                                                {char === ' ' ? '\u00A0' : char}
-                                            </span>
-                                        );
+                                        if (index < currentIndex) statusClass = "done";
+                                        else if (index === currentIndex) statusClass = hasError ? "current error" : "current";
+                                        return <span key={index} className={`typing-char ${statusClass}`}>{char === ' ' ? '\u00A0' : char}</span>;
                                     })}
                                 </div>
                             )}
@@ -714,9 +649,7 @@
                                 </>
                             )}
                             <div className="bg-orange-400 w-6 h-6 flex items-center justify-center rounded text-white text-sm shadow-sm uppercase">{fingerInfo.letter}</div>
-                            <span className="text-gray-800 text-sm">
-                                {fingerInfo.name} {fingerInfo.isUpper ? `(Kèm ${fingerInfo.shiftName})` : ''}
-                            </span>
+                            <span className="text-gray-800 text-sm">{fingerInfo.name} {fingerInfo.isUpper ? `(Kèm ${fingerInfo.shiftName})` : ''}</span>
                         </div>
                     ) : null}
 
@@ -729,43 +662,18 @@
                             {keyboardLayout.map((row, rowIndex) => (
                                 <div key={rowIndex} className="flex gap-1 justify-center">
                                     {row.map((btn, btnIndex) => {
-                                        let expectedBase = currentExpectedChar ? currentExpectedChar.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() : '';
-                                        let isUpper = currentExpectedChar && currentExpectedChar !== currentExpectedChar.toLowerCase() && /[a-z]/i.test(expectedBase);
-                                        
-                                        if (currentExpectedChar === '?') { expectedBase = '/'; isUpper = true; }
-                                        if (currentExpectedChar === '!') { expectedBase = '1'; isUpper = true; }
-                                        
-                                        let targetShiftKey = null;
-                                        if (isUpper && fingerInfo) {
-                                            targetShiftKey = fingerInfo.shiftName === 'Ngón út tay phải' ? 'Shift_R' : 'Shift';
+                                        const isExpectedBase = !isFinished && fingerInfo && btn.code === fingerInfo.baseCode;
+                                        let isExpectedShift = false;
+                                        if (!isFinished && fingerInfo && fingerInfo.isUpper) {
+                                            if (fingerInfo.shiftName === 'Ngón út tay phải' && btn.code === 'ShiftRight') isExpectedShift = true;
+                                            if (fingerInfo.shiftName === 'Ngón út tay trái' && btn.code === 'ShiftLeft') isExpectedShift = true;
                                         }
-
-                                        const isExpectedBase = !isFinished && currentExpectedChar && btn.char && (
-                                            btn.char.toLowerCase() === expectedBase || 
-                                            (currentExpectedChar === ' ' && btn.char === ' ')
-                                        );
-                                        const isExpectedShift = !isFinished && isUpper && btn.char === targetShiftKey;
-                                        
                                         const isExpected = isExpectedBase || isExpectedShift;
-                                        
-                                        let isPressed = false;
-                                        if (activeKey) {
-                                            if (activeKey.toLowerCase() === 'shift') {
-                                                if (activeKeyLocation === 1 && btn.char === 'Shift') isPressed = true;
-                                                else if (activeKeyLocation === 2 && btn.char === 'Shift_R') isPressed = true;
-                                                else if (!activeKeyLocation && (btn.char === 'Shift' || btn.char === 'Shift_R')) isPressed = true;
-                                            } else {
-                                                isPressed = btn.char && (activeKey.toLowerCase() === btn.char.toLowerCase() || (activeKey === ' ' && btn.char === ' '));
-                                            }
-                                        }
+                                        const isPressed = activeCode === btn.code || (activeCode && activeCode.includes('Shift') && btn.code.includes('Shift') && activeCode === btn.code);
 
                                         const btnClasses = `key ${btn.class} ${isPressed ? 'active-typing' : ''} ${isExpected ? 'target-key' : ''}`;
                                         
-                                        return (
-                                            <div key={btnIndex} className={btnClasses}>
-                                                {btn.label || btn.char}
-                                            </div>
-                                        );
+                                        return <div key={btnIndex} className={btnClasses}>{btn.label || btn.char}</div>;
                                     })}
                                 </div>
                             ))}
@@ -781,17 +689,17 @@
                             <div className="bg-white rounded-xl shadow-2xl w-11/12 max-w-5xl flex flex-col max-h-[85vh] overflow-hidden border-2 border-green-500">
                                 <div className="bg-white text-green-700 p-4 flex justify-between items-center border-b-2 border-green-100">
                                     <h2 className="text-2xl font-bold flex items-center gap-2">📊 Kết Quả Của Em</h2>
-                                    <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <button onClick={exportToCSV} className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-600 transition flex items-center gap-1">
+                                            📥 Xuất Excel
+                                        </button>
                                         {isTeacherMode && !isOffline ? (
-                                            <button onClick={clearAllData} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-red-600 transition">
-                                                🗑️ Làm sạch toàn bộ dữ liệu
-                                            </button>
+                                            <button onClick={clearAllData} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-red-600 transition">🗑️ Làm sạch</button>
                                         ) : null}
                                         <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg text-sm border hover:bg-gray-200">
-                                            <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />
-                                            Giáo viên
+                                            <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold">&times;</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">&times;</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
@@ -807,14 +715,12 @@
                                         </thead>
                                         <tbody>
                                             {displayedStats.length === 0 ? (
-                                                <tr><td colSpan="5" className="p-6 text-center text-gray-500 italic">Chưa có kết quả nào trong phiên này...</td></tr>
+                                                <tr><td colSpan="5" className="p-6 text-center text-gray-500 italic">Chưa có kết quả nào...</td></tr>
                                             ) : (
                                                 displayedStats.map(stat => {
                                                     const acc = stat.accuracy || 0;
                                                     const isNeedsImprovement = acc < 80;
-                                                    const rowClass = isNeedsImprovement 
-                                                        ? "bg-red-50 hover:bg-red-100 border-b border-red-200 transition-colors" 
-                                                        : "hover:bg-green-50 border-b border-gray-100 transition-colors";
+                                                    const rowClass = isNeedsImprovement ? "bg-red-50 hover:bg-red-100 border-b border-red-200" : "hover:bg-green-50 border-b border-gray-100";
                                                         
                                                     return (
                                                         <tr key={stat.id} className={rowClass}>
@@ -823,14 +729,7 @@
                                                             <td className="p-4 text-gray-700 text-sm font-medium">{stat.lessonTitle || ""}</td>
                                                             <td className={`p-4 text-center font-bold text-xl ${isNeedsImprovement ? 'text-red-700' : 'text-red-500'}`}>{stat.errors || 0}</td>
                                                             <td className="p-4 text-center flex flex-col items-center justify-center">
-                                                                <span className={`font-bold text-xl ${isNeedsImprovement ? 'text-red-700' : 'text-green-600'}`}>
-                                                                    {acc}%
-                                                                </span>
-                                                                {isNeedsImprovement ? (
-                                                                    <span className="mt-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold uppercase shadow-sm">
-                                                                        ⚠️ Chưa đạt
-                                                                    </span>
-                                                                ) : null}
+                                                                <span className={`font-bold text-xl ${isNeedsImprovement ? 'text-red-700' : 'text-green-600'}`}>{acc}%</span>
                                                             </td>
                                                         </tr>
                                                     );
