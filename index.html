@@ -174,6 +174,18 @@
                 "Doan ket tot, ky luat tot",
                 "Giu gin ve sinh that tot",
                 "Khiem ton, that tha, dung cam"
+            ]},
+            { id: 10, title: "Bài 10: Luyện tập 2", texts: [
+                "Ai yeu cac nhi dong",
+                "Bang Bac Ho Chi Minh?",
+                "Tinh cac chau ngoan ngoan,",
+                "Mat cac chau xinh xinh,",
+                "Mong cac chau co gang,",
+                "Thi dua hoc va hanh.",
+                "Tuoi nho lam viec nho,",
+                "Tuy theo suc cua minh",
+                "Cac chau hay xung dang",
+                "Chau Bac Ho Chi Minh!"
             ]}
         ];
 
@@ -182,7 +194,6 @@
             const getFill = (fingerName) => {
                 const fullTargetName = `${fingerName} tay ${isLeft ? 'trái' : 'phải'}`;
                 
-                // Tô màu ngón tay bấm chữ chính
                 if (expectedFingerName === fullTargetName) {
                     if (fingerName === 'Ngón út') return '#ffa94d';     
                     if (fingerName === 'Ngón áp út') return '#ffd43b';  
@@ -190,7 +201,6 @@
                     if (fingerName === 'Ngón trỏ') return '#69db7c';    
                 }
                 
-                // ĐÂY LÀ ĐIỂM SỬA LỖI: Tô màu ngón tay giữ phím Shift (ngón út)
                 if (expectedShiftFingerName === fullTargetName) {
                     return '#ffa94d'; 
                 }
@@ -258,8 +268,12 @@
             if (!char) return null;
             if (char === ' ') return { name: "Ngón cái", color: "bg-orange-400", letter: "-", isUpper: false, shiftName: null };
             
-            const isUpper = char !== char.toLowerCase() && /[A-Z]/.test(char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'));
-            const normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+            let normalizedChar = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+            let isUpper = char !== char.toLowerCase() && /[a-z]/i.test(normalizedChar);
+            
+            // Xử lý đặc biệt cho ký tự ? và !
+            if (char === '?') { normalizedChar = '/'; isUpper = true; }
+            if (char === '!') { normalizedChar = '1'; isUpper = true; }
 
             const map = {
                 'q': 'Ngón út tay trái', 'a': 'Ngón út tay trái', 'z': 'Ngón út tay trái', '1': 'Ngón út tay trái',
@@ -656,7 +670,6 @@
 
                     <div className="bg-[#e5e7eb] w-full flex justify-between items-end z-20 relative border-t border-gray-300">
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
-                            {/* Đã bổ sung biến expectedShiftFingerName vào thẻ CuteHand để bật màu ngón tay giữ Shift */}
                             <CuteHand isLeft={true} expectedFingerName={fingerInfo ? fingerInfo.name : null} expectedShiftFingerName={fingerInfo ? fingerInfo.shiftName : null} />
                         </div>
 
@@ -664,8 +677,11 @@
                             {keyboardLayout.map((row, rowIndex) => (
                                 <div key={rowIndex} className="flex gap-1 justify-center">
                                     {row.map((btn, btnIndex) => {
-                                        const expectedBase = currentExpectedChar ? currentExpectedChar.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() : '';
-                                        const isUpper = currentExpectedChar && currentExpectedChar !== currentExpectedChar.toLowerCase() && /[a-zA-Z]/.test(expectedBase);
+                                        let expectedBase = currentExpectedChar ? currentExpectedChar.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() : '';
+                                        let isUpper = currentExpectedChar && currentExpectedChar !== currentExpectedChar.toLowerCase() && /[a-z]/i.test(expectedBase);
+                                        
+                                        if (currentExpectedChar === '?') { expectedBase = '/'; isUpper = true; }
+                                        if (currentExpectedChar === '!') { expectedBase = '1'; isUpper = true; }
                                         
                                         let targetShiftKey = null;
                                         if (isUpper && fingerInfo) {
@@ -704,7 +720,6 @@
                         </div>
 
                         <div className="flex-1 flex justify-center pb-2 pointer-events-none hidden md:flex">
-                            {/* Đã bổ sung biến expectedShiftFingerName vào thẻ CuteHand để bật màu ngón tay giữ Shift */}
                             <CuteHand isLeft={false} expectedFingerName={fingerInfo ? fingerInfo.name : null} expectedShiftFingerName={fingerInfo ? fingerInfo.shiftName : null} />
                         </div>
                     </div>
