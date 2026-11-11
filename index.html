@@ -277,9 +277,7 @@
             
             const [sessionStart] = React.useState(() => Date.now() - 30000); 
 
-            // Xác định đoạn chữ cần hiển thị tùy theo việc bài này là mảng câu (texts) hay câu đơn (text)
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
-            // Số lượt hiển thị sẽ dựa trên số lượng phần tử trong mảng texts, mặc định là 3 cho bài đơn lẻ
             const maxLoops = lesson.texts ? lesson.texts.length : 3;
 
             React.useEffect(() => {
@@ -326,11 +324,9 @@
                         setHasError(false); 
                         if (currentIndex + 1 === currentText.length) {
                             if (currentLoop < maxLoops) {
-                                // Chuyển sang lượt (câu) tiếp theo
                                 setCurrentLoop(prev => prev + 1);
                                 setCurrentIndex(0);
                             } else {
-                                // Đã hoàn thành tất cả các lượt
                                 setIsFinished(true);
                                 const timeTaken = Math.floor((Date.now() - startTime) / 1000);
                                 const finalAcc = Math.max(0, 100 - (errors * 5));
@@ -454,7 +450,6 @@
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
             
-            // Cỡ chữ lớn cho tất cả, vì mỗi lần chỉ hiện 1 câu ngắn gọn
             const sizeClass = "size-lg";
 
             return (
@@ -503,7 +498,7 @@
                             
                             {!isFinished && (
                                 <span className="font-bold text-yellow-400 bg-gray-800 px-3 py-1 rounded shadow-inner">
-                                    Lượt: {currentLoop}/{maxLoops}
+                                    {lesson.id <= 5 ? `Lượt: ${currentLoop}/${maxLoops}` : `Câu số: ${currentLoop}/${maxLoops}`}
                                 </span>
                             )}
                             
@@ -675,7 +670,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<ErrorBoundary><App /></ErrorBoundary>);
+        root.render(<App />);
     </script>
 </body>
 </html>
