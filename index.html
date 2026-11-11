@@ -185,7 +185,6 @@
             ]}
         ];
 
-        // Lấy ký tự thực tế dựa trên Mã phần cứng (e.code) để chống lại Unikey
         const getCharFromCode = (code, shiftKey) => {
             const codeMap = {
                 'KeyA': 'a', 'KeyB': 'b', 'KeyC': 'c', 'KeyD': 'd', 'KeyE': 'e',
@@ -255,7 +254,6 @@
             );
         };
 
-        // Bổ sung mã `code` vào Layout để bàn phím ảo highlight đúng phím dù Unikey đang bật
         const keyboardLayout = [
             [
                 { char: '`', code: 'Backquote', class: 'c-orange w-10 h-10' }, { char: '1', code: 'Digit1', class: 'c-orange w-10 h-10' }, { char: '2', code: 'Digit2', class: 'c-yellow w-10 h-10' }, 
@@ -337,6 +335,8 @@
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
             
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
@@ -345,7 +345,7 @@
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
             const [activeCode, setActiveCode] = React.useState(null); 
-            const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
             
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
@@ -372,9 +372,10 @@
                 return () => unsubscribe();
             }, [sessionStart]);
 
-            // LẮNG NGHE MÃ PHẦN CỨNG BÀN PHÍM ĐỂ XÓA SỔ HOÀN TOÀN TÁC ĐỘNG CỦA UNIKEY
+            // LẮNG NGHE TRỰC TIẾP TỪ WINDOW ĐỂ CHẶN UNIKEY
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
+                    // Cho phép gõ tên trong ô input
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
@@ -382,19 +383,21 @@
                         return;
                     }
 
-                    // Cho phép các tổ hợp phím trình duyệt như F5, Ctrl+R, Alt+Tab
+                    // Bỏ qua các tổ hợp phím hệ thống
                     if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('F')) return;
                     
-                    // Chặn hành vi mặc định của Unikey và trình duyệt nếu đó là phím gõ chữ/số/dấu
+                    // Chặn hành vi mặc định để chống Unikey giật phím
                     if (e.code.startsWith('Key') || e.code.startsWith('Digit') || ['Space', 'Comma', 'Period', 'Slash', 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'Backslash', 'Minus', 'Equal', 'Backquote'].includes(e.code)) {
                         e.preventDefault(); 
                     }
 
                     if (isFinished) return;
+                    
                     setActiveCode(e.code);
+                    setActiveKeyLocation(e.location);
 
                     const typedChar = getCharFromCode(e.code, e.shiftKey);
-                    if (typedChar === null) return; // Không phải phím hợp lệ
+                    if (typedChar === null) return; 
 
                     if (!startTime) setStartTime(Date.now());
 
@@ -433,6 +436,7 @@
                 
                 const handleKeyUp = () => {
                     setActiveCode(null);
+                    setActiveKeyLocation(null);
                 };
 
                 window.addEventListener('keydown', handleKeyDown);
@@ -442,6 +446,27 @@
                     window.removeEventListener('keyup', handleKeyUp);
                 };
             }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
+
+
+            const handleNameBlur = () => {
+                if (playerName.trim() !== "") {
+                    setIsNameConfirmed(true);
+                } else {
+                    setIsNameConfirmed(false);
+                }
+            };
+
+            const handleNameKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    if (e.nativeEvent && (e.nativeEvent.isComposing || e.keyCode === 229)) return;
+                    e.preventDefault();
+                    if (playerName && playerName.trim() !== "") {
+                        e.target.blur();         
+                    } else {
+                        setShowNameModal(true);
+                    }
+                }
+            };
 
             const resetLesson = () => {
                 setCurrentIndex(0); 
@@ -472,7 +497,10 @@
             };
             
             const clearAllData = async () => {
-                if (!db) return alert("Máy chủ đang ngoại tuyến, không thể xóa.");
+                if (!db) {
+                    alert("Máy chủ đang ngoại tuyến, không thể xóa.");
+                    return;
+                }
                 if (window.confirm("Thầy/Cô có chắc chắn muốn XÓA VĨNH VIỄN toàn bộ lịch sử điểm trên máy chủ không?")) {
                     try {
                         const snapshot = await db.collection("stats").get();
@@ -512,9 +540,8 @@
                 }
             }, [statsData, isTeacherMode, playerName]);
 
-            // HÀM XUẤT FILE EXCEL (.CSV) CÓ BOM ĐỂ ĐỌC CHUẨN TIẾNG VIỆT
             const exportToCSV = () => {
-                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Ký tự BOM giúp Excel nhận diện Tiếng Việt UTF-8
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
                 csvContent += "Thời gian,Tên Học Sinh,Bài tập,Số lỗi,Chính xác\n";
 
                 const statsToExport = isTeacherMode ? displayedStats : statsData.filter(stat => (stat.playerName || "").toLowerCase() === playerName.toLowerCase());
@@ -539,9 +566,10 @@
 
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
-
+            
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
+
                     {showNameModal && (
                         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
                             <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center gap-6 max-w-md w-11/12 animate-pop-in border-4 border-blue-100">
@@ -550,17 +578,27 @@
                                 <input 
                                     type="text" placeholder="Nhập tên của em vào đây nhé..." 
                                     value={playerName} onChange={(e) => setPlayerName(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' && playerName.trim() !== '') setIsNameConfirmed(true); setShowNameModal(false); }}
+                                    onKeyDown={(e) => { 
+                                        if (e.key === 'Enter' && playerName.trim() !== '') {
+                                            setIsNameConfirmed(true); setShowNameModal(false); document.activeElement?.blur(); 
+                                        } 
+                                    }}
                                     className="w-full text-xl p-3 border-2 border-blue-400 rounded-xl outline-none focus:border-blue-600 font-bold text-center text-gray-800 shadow-inner" autoFocus
                                 />
                                 <button 
-                                    onClick={() => { if (playerName.trim() !== '') { setIsNameConfirmed(true); setShowNameModal(false); } }}
-                                    className={`w-full py-3 rounded-xl font-bold text-xl text-white transition shadow-md ${playerName.trim() !== '' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'}`}
+                                    onClick={() => { if (playerName.trim() !== '') { setIsNameConfirmed(true); setShowNameModal(false); document.activeElement?.blur(); } }}
+                                    className={`w-full py-3 rounded-xl font-bold text-xl text-white transition shadow-md flex items-center justify-center gap-2 ${playerName.trim() !== '' ? 'bg-blue-500 hover:bg-blue-600 transform hover:-translate-y-1' : 'bg-gray-400 cursor-not-allowed'}`}
                                     disabled={playerName.trim() === ''}
                                 >🚀 Bắt đầu thực hành</button>
                             </div>
                         </div>
                     )}
+
+                    {isOffline ? (
+                        <div className="bg-red-600 text-white text-center text-sm py-1 font-bold z-50 relative">
+                            ⚠️ Mất kết nối mạng. Học sinh luyện gõ bình thường nhưng điểm không được lưu lên máy chủ.
+                        </div>
+                    ) : null}
 
                     <div className="bg-[#202124] text-white p-2 flex justify-between items-center shadow-md z-20 h-14">
                         <div className="flex items-center gap-4 h-full">
@@ -568,9 +606,11 @@
                             <div className={`bg-white rounded px-2 py-1 flex items-center h-8 border-2 ${!isNameConfirmed ? 'border-transparent' : 'border-green-500'} ml-4`}>
                                 <span className="text-gray-500 mr-2 text-sm">👤</span>
                                 <input 
+                                    id="playerNameInput"
                                     type="text" placeholder="Nhập tên của em..." value={playerName} 
                                     onChange={(e) => { setPlayerName(e.target.value); setIsNameConfirmed(false); }} 
-                                    onKeyDown={(e) => { if (e.key === 'Enter' && playerName.trim() !== '') { e.target.blur(); setIsNameConfirmed(true); } }}
+                                    onBlur={handleNameBlur}
+                                    onKeyDown={handleNameKeyDown}
                                     className="text-black outline-none border-none bg-transparent w-40 text-sm font-bold"
                                 />
                             </div>
@@ -690,9 +730,7 @@
                                 <div className="bg-white text-green-700 p-4 flex justify-between items-center border-b-2 border-green-100">
                                     <h2 className="text-2xl font-bold flex items-center gap-2">📊 Kết Quả Của Em</h2>
                                     <div className="flex items-center gap-4">
-                                        <button onClick={exportToCSV} className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-600 transition flex items-center gap-1">
-                                            📥 Xuất Excel
-                                        </button>
+                                        <button onClick={exportToCSV} className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-600 transition flex items-center gap-1">📥 Xuất Excel</button>
                                         {isTeacherMode && !isOffline ? (
                                             <button onClick={clearAllData} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-red-600 transition">🗑️ Làm sạch</button>
                                         ) : null}
