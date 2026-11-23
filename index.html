@@ -58,10 +58,14 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
+        /* Co giãn đồng đều theo chiều rộng màn hình để mọi câu luôn nằm trên 1 dòng */
         .typing-char {
             display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.1s; border-radius: 4px;
-            min-width: 26px; height: 50px; font-size: 2.8rem; margin: 4px 1px;
+            transition: all 0.1s; border-radius: 4px; flex-shrink: 0;
+            min-width: clamp(16px, 1.85vw, 32px);
+            height: clamp(38px, 3.6vw, 56px);
+            font-size: clamp(1.4rem, 2.3vw, 2.8rem);
+            margin: 2px 0.5px;
         }
         
         .typing-char.current { border: 2.5px solid #1e293b; color: #000; font-weight: bold; background-color: rgba(255,255,255,0.3); }
@@ -360,7 +364,6 @@
             }
         };
 
-        // Công thức tính độ chính xác chuẩn: Số phím đúng / (Số phím đúng + Số lỗi) * 100%
         const calcStandardAccuracy = (correctCount, errorCount) => {
             const total = correctCount + errorCount;
             if (total === 0) return 100;
@@ -435,7 +438,6 @@
                 }
             }, []);
 
-            // Bộ đếm ngược 10 phút cho bài Kiểm tra thực hành
             React.useEffect(() => {
                 if (!lesson.isExam || !startTime || isFinished) return;
 
@@ -793,7 +795,7 @@
                                     </div>
                                 </div>
                             ) : (
-                                <div className="font-mono tracking-widest flex flex-wrap justify-center px-6 w-full lg:px-20">
+                                <div className="font-mono flex flex-nowrap whitespace-nowrap justify-center items-center px-4 w-full overflow-hidden">
                                     {currentText.split('').map((char, index) => {
                                         let statusClass = "waiting";
                                         if (index < currentIndex) statusClass = "done";
