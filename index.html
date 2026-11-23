@@ -182,6 +182,18 @@
                 "Tuy theo suc cua minh",
                 "Cac chau hay xung dang",
                 "Chau Bac Ho Chi Minh!"
+            ]},
+            { id: 11, title: "Bài 11: Luyện tập 3", texts: [
+                "Nam nay em hoc lop ba tai truong tieu hoc.",
+                "Sang nao em cung day som de tap the duc.",
+                "Em an sang cung bo me roi den truong.",
+                "Lop em co rat nhieu ban than va vui tinh.",
+                "Gio ra choi, chung em hay nhay day o san.",
+                "Em thich nhat la tiet Tin hoc o phong may.",
+                "Thay co day em go ban phim bang muoi ngon.",
+                "Nha em co nuoi mot chu cho con rat ngoan.",
+                "Buoi toi, em hoc bai xong roi moi di ngu.",
+                "Em rat yeu gia dinh va ngoi truong cua minh."
             ]}
         ];
 
@@ -356,20 +368,6 @@
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
 
             React.useEffect(() => {
-                const focusHiddenInput = (e) => {
-                    const tag = e.target?.tagName;
-                    if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
-                        const hiddenInput = document.getElementById('hidden-typing-input');
-                        if (hiddenInput && !isFinished && isNameConfirmed) {
-                            hiddenInput.focus();
-                        }
-                    }
-                };
-                document.addEventListener('click', focusHiddenInput);
-                return () => document.removeEventListener('click', focusHiddenInput);
-            }, [isFinished, isNameConfirmed]);
-
-            React.useEffect(() => {
                 if (!db) return;
                 const unsubscribe = db.collection("stats").orderBy("timestamp", "desc").limit(100).onSnapshot(snapshot => {
                     const data = snapshot.docs.map(doc => {
@@ -388,11 +386,10 @@
 
             React.useEffect(() => {
                 const handleKeyDown = (e) => {
-                    // Nếu đang nhập tên thì để trình duyệt tự xử lý
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     
                     if (!playerName || playerName.trim() === "" || !isNameConfirmed) {
-                        e.preventDefault(); // CHẶN LẠI NGAY TẠI ĐÂY, TRÁNH LỌT PHÍM VÀO Ô NHẬP TÊN
+                        e.preventDefault();
                         setShowNameModal(true);
                         return;
                     }
@@ -578,8 +575,6 @@
 
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
-            
-            const sizeClass = currentText.length >= 25 ? "size-sm" : "size-lg";
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
@@ -687,7 +682,7 @@
                                         let statusClass = "waiting";
                                         if (index < currentIndex) statusClass = "done";
                                         else if (index === currentIndex) statusClass = hasError ? "current error" : "current";
-                                        return <span key={index} className={`typing-char ${sizeClass} ${statusClass}`}>{char === ' ' ? '\u00A0' : char}</span>;
+                                        return <span key={index} className={`typing-char ${statusClass}`}>{char === ' ' ? '\u00A0' : char}</span>;
                                     })}
                                 </div>
                             )}
@@ -752,7 +747,7 @@
                                         <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg text-sm border hover:bg-gray-200">
                                             <input type="checkbox" checked={isTeacherMode} onChange={(e) => setIsTeacherMode(e.target.checked)} className="w-4 h-4 rounded text-green-600" />Giáo viên
                                         </label>
-                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">&times;</button>
+                                        <button onClick={() => setShowStats(false)} className="text-gray-500 hover:text-red-500 text-3xl font-bold ml-2">×</button>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-y-auto bg-gray-50">
