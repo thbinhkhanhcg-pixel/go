@@ -183,18 +183,24 @@
                 "Cac chau hay xung dang",
                 "Chau Bac Ho Chi Minh!"
             ]},
-            { id: 11, title: "Bài 11: Luyện tập 3", texts: [
-                "Nam nay em hoc lop ba tai truong tieu hoc.",
-                "Sang nao em cung day som de tap the duc.",
-                "Em an sang cung bo me roi den truong.",
-                "Lop em co rat nhieu ban than va vui tinh.",
-                "Gio ra choi, chung em hay nhay day o san.",
-                "Em thich nhat la tiet Tin hoc o phong may.",
-                "Thay co day em go ban phim bang muoi ngon.",
-                "Nha em co nuoi mot chu cho con rat ngoan.",
-                "Buoi toi, em hoc bai xong roi moi di ngu.",
-                "Em rat yeu gia dinh va ngoi truong cua minh."
-            ]}
+            { 
+                id: 11, 
+                title: "Bài 11: Kiểm tra thực hành", 
+                isExam: true,
+                timeLimit: 600, // 10 phút = 600 giây
+                texts: [
+                    "Nam nay em hoc lop ba tai truong tieu hoc.",
+                    "Sang nao em cung day som de tap the duc.",
+                    "Em an sang cung bo me roi den truong.",
+                    "Lop em co rat nhieu ban than va vui tinh.",
+                    "Gio ra choi, chung em hay nhay day o san.",
+                    "Em thich nhat la tiet Tin hoc o phong may.",
+                    "Thay co day em go ban phim bang muoi ngon.",
+                    "Nha em co nuoi mot chu cho con rat ngoan.",
+                    "Buoi toi, em hoc bai xong roi moi di ngu.",
+                    "Em rat yeu gia dinh va ngoi truong cua minh."
+                ]
+            }
         ];
 
         const getCharFromCode = (code, shiftKey) => {
@@ -339,6 +345,21 @@
             return { name, letter: normalizedChar, isUpper, shiftName, baseCode: info.code };
         };
 
+        const calcCompletionPercent = (lessonObj, loop, charIdx) => {
+            if (lessonObj.texts) {
+                const totalChars = lessonObj.texts.reduce((sum, t) => sum + t.length, 0);
+                if (totalChars === 0) return 100;
+                const doneBefore = lessonObj.texts.slice(0, loop - 1).reduce((sum, t) => sum + t.length, 0);
+                return Math.min(100, Math.round(((doneBefore + charIdx) / totalChars) * 100));
+            } else {
+                const loops = lessonObj.loops || 3;
+                const totalChars = (lessonObj.text || "").length * loops;
+                if (totalChars === 0) return 100;
+                const doneBefore = (lessonObj.text || "").length * (loop - 1);
+                return Math.min(100, Math.round(((doneBefore + charIdx) / totalChars) * 100));
+            }
+        };
+
         function App() {
             const [playerName, setPlayerName] = React.useState("");
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
@@ -346,19 +367,20 @@
             
             const [lesson, setLesson] = React.useState(lessons[0]);
             const [currentLoop, setCurrentLoop] = React.useState(1);
-            
             const [currentIndex, setCurrentIndex] = React.useState(0);
             
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
+            const [isTimeout, setIsTimeout] = React.useState(false);
+            const [timeLeft, setTimeLeft] = React.useState(null);
+            const [finalResult, setFinalResult] = React.useState(null);
+
             const [showStats, setShowStats] = React.useState(false);
             const [statsData, setStatsData] = React.useState([]);
             const [isTeacherMode, setIsTeacherMode] = React.useState(false);
             
             const [activeCode, setActiveCode] = React.useState(null); 
-            const [activeKeyLocation, setActiveKeyLocation] = React.useState(null); 
-            
             const [accuracy, setAccuracy] = React.useState(100);
             const [hasError, setHasError] = React.useState(false); 
             
@@ -366,6 +388,61 @@
 
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
+
+            // Lưu trạng thái mới nhất vào ref để bộ đếm ngược tự động nộp bài chính xác
+            const latestStateRef = React.useRef({});
+            latestStateRef.current = { lesson, currentLoop, currentIndex, errors, playerName, startTime, isFinished };
+
+            const submitLesson = React.useCallback((timedOut = false, overrideCompletion = null) => {
+                const st = latestStateRef.current;
+                if (st.isFinished) return;
+
+                const timeTaken = timedOut
+                    ? (st.lesson.timeLimit || 600)
+                    : (st.startTime ? Math.floor((Date.now() - st.startTime) / 1000) : 0);
+
+                const completion = overrideCompletion !== null
+                    ? overrideCompletion
+                    : calcCompletionPercent(st.lesson, st.currentLoop, st.currentIndex);
+
+                const finalAcc = (completion === 0 && st.errors === 0)
+                    ? 0
+                    : Math.max(0, 100 - (st.errors * 5));
+
+                setIsFinished(true);
+                setIsTimeout(timedOut);
+                setFinalResult({ timeTaken, errors: st.errors, accuracy: finalAcc, completion });
+
+                if (db) {
+                    db.collection("stats").add({
+                        playerName: st.playerName || "Khách",
+                        lessonTitle: st.lesson.title,
+                        errors: st.errors,
+                        accuracy: finalAcc,
+                        completion: completion,
+                        timeTaken: timeTaken,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(err => console.log(err));
+                }
+            }, []);
+
+            // Bộ đếm ngược 10 phút cho bài Kiểm tra thực hành
+            React.useEffect(() => {
+                if (!lesson.isExam || !startTime || isFinished) return;
+
+                const timer = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const remaining = Math.max(0, (lesson.timeLimit || 600) - elapsed);
+                    setTimeLeft(remaining);
+
+                    if (remaining <= 0) {
+                        clearInterval(timer);
+                        submitLesson(true);
+                    }
+                }, 500);
+
+                return () => clearInterval(timer);
+            }, [lesson, startTime, isFinished, submitLesson]);
 
             React.useEffect(() => {
                 if (!db) return;
@@ -407,12 +484,14 @@
                     if (isFinished) return;
                     
                     setActiveCode(e.code);
-                    setActiveKeyLocation(e.location);
 
                     const typedChar = getCharFromCode(e.code, e.shiftKey);
                     if (typedChar === null) return; 
 
-                    if (!startTime) setStartTime(Date.now());
+                    if (!startTime) {
+                        setStartTime(Date.now());
+                        if (lesson.isExam) setTimeLeft(lesson.timeLimit || 600);
+                    }
 
                     const expectedChar = currentText[currentIndex];
 
@@ -423,33 +502,21 @@
                                 setCurrentLoop(prev => prev + 1);
                                 setCurrentIndex(0);
                             } else {
-                                setIsFinished(true);
-                                const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-                                const finalAcc = Math.max(0, 100 - (errors * 5));
-                                if (db) {
-                                    db.collection("stats").add({
-                                        playerName: playerName,
-                                        lessonTitle: lesson.title,
-                                        errors: errors,
-                                        accuracy: finalAcc,
-                                        timeTaken: timeTaken,
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                                    }).catch(err => console.log(err));
-                                }
+                                submitLesson(false, 100);
                             }
                         } else {
                             setCurrentIndex(prev => prev + 1);
                         }
                     } else {
                         setHasError(true);
-                        setErrors(prev => prev + 1);
-                        setAccuracy(prev => Math.max(0, 100 - ((prev + 1) * 5)));
+                        const nextErrors = errors + 1;
+                        setErrors(nextErrors);
+                        setAccuracy(Math.max(0, 100 - (nextErrors * 5)));
                     }
                 };
                 
                 const handleKeyUp = () => {
                     setActiveCode(null);
-                    setActiveKeyLocation(null);
                 };
 
                 window.addEventListener('keydown', handleKeyDown);
@@ -458,7 +525,7 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops]);
+            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops, submitLesson]);
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -480,25 +547,25 @@
                 }
             };
 
-            const resetLesson = () => {
+            const resetLesson = (targetLesson = lesson) => {
                 setCurrentIndex(0); 
                 setCurrentLoop(1);
                 setErrors(0); 
                 setAccuracy(100); 
                 setStartTime(null); 
                 setIsFinished(false); 
+                setIsTimeout(false);
+                setFinalResult(null);
+                setTimeLeft(targetLesson.isExam ? (targetLesson.timeLimit || 600) : null);
                 setShowStats(false); 
                 setHasError(false);
             };
 
             const handleNextLesson = () => {
                 const currentIdx = lessons.findIndex(l => l.id === lesson.id);
-                if (currentIdx < lessons.length - 1) {
-                    setLesson(lessons[currentIdx + 1]);
-                } else {
-                    setLesson(lessons[0]); 
-                }
-                resetLesson();
+                const nextLesson = currentIdx < lessons.length - 1 ? lessons[currentIdx + 1] : lessons[0];
+                setLesson(nextLesson);
+                resetLesson(nextLesson);
             };
 
             const formatTime = (seconds) => {
@@ -541,6 +608,11 @@
                         const numA = parseInt((a.lessonTitle || "").match(/Bài (\d+)/i)?.[1] || 999, 10);
                         const numB = parseInt((b.lessonTitle || "").match(/Bài (\d+)/i)?.[1] || 999, 10);
                         if (numA !== numB) return numA - numB;
+
+                        const compA = a.completion !== undefined ? a.completion : 100;
+                        const compB = b.completion !== undefined ? b.completion : 100;
+                        if (compA !== compB) return compB - compA;
+
                         if ((a.accuracy || 0) !== (b.accuracy || 0)) return (b.accuracy || 0) - (a.accuracy || 0);
                         return (a.timeTaken || 0) - (b.timeTaken || 0);
                     });
@@ -551,17 +623,18 @@
 
             const exportToCSV = () => {
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-                csvContent += "Thời gian,Tên Học Sinh,Bài tập,Số lỗi,Chính xác\n";
+                csvContent += "Thời gian,Tên Học Sinh,Bài tập,Số lỗi,Chính xác,% Hoàn thành\n";
 
                 const statsToExport = isTeacherMode ? displayedStats : statsData.filter(stat => (stat.playerName || "").toLowerCase() === playerName.toLowerCase());
 
                 statsToExport.forEach(stat => {
                     const timeStr = formatTime(stat.timeTaken);
                     const name = `"${stat.playerName || ""}"`;
-                    const lesson = `"${stat.lessonTitle || ""}"`;
-                    const errors = stat.errors || 0;
+                    const lessonTitle = `"${stat.lessonTitle || ""}"`;
+                    const errCount = stat.errors || 0;
                     const acc = `"${stat.accuracy || 0}%"`;
-                    csvContent += `${timeStr},${name},${lesson},${errors},${acc}\n`;
+                    const comp = `"${stat.completion !== undefined ? stat.completion : 100}%"`;
+                    csvContent += `${timeStr},${name},${lessonTitle},${errCount},${acc},${comp}\n`;
                 });
 
                 const encodedUri = encodeURI(csvContent);
@@ -575,6 +648,7 @@
 
             const currentExpectedChar = isFinished ? null : currentText[currentIndex];
             const fingerInfo = currentExpectedChar ? getFingerSuggestion(currentExpectedChar) : null;
+            const liveCompletion = calcCompletionPercent(lesson, currentLoop, currentIndex);
 
             return (
                 <div className="flex flex-col h-screen overflow-hidden relative">
@@ -624,26 +698,36 @@
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-6 items-center text-sm">
+                        <div className="flex gap-4 items-center text-sm">
                             <select 
                                 className="text-black px-2 py-1.5 rounded outline-none font-bold bg-yellow-100" 
                                 value={lesson.id} 
                                 onChange={(e) => { 
                                     const selected = lessons.find(l => l.id.toString() === e.target.value);
-                                    if(selected) { setLesson(selected); resetLesson(); }
+                                    if(selected) { setLesson(selected); resetLesson(selected); }
                                     e.target.blur(); 
                                 }}
                             >
                                 {lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
                             </select>
+
+                            {lesson.isExam && !isFinished && (
+                                <span className={`font-bold px-3 py-1 rounded shadow-inner flex items-center gap-1 ${(timeLeft !== null && timeLeft <= 60) ? 'bg-red-600 text-white animate-pulse' : 'bg-orange-500 text-white'}`}>
+                                    ⏱️ {formatTime(timeLeft !== null ? timeLeft : lesson.timeLimit)}
+                                </span>
+                            )}
                             
                             {!isFinished && (
                                 <span className="font-bold text-yellow-400 bg-gray-800 px-3 py-1 rounded shadow-inner">
                                     {lesson.id >= 6 ? `Câu số: ${currentLoop}/${maxLoops}` : `Lượt: ${currentLoop}/${maxLoops}`}
                                 </span>
                             )}
+
+                            {lesson.isExam && !isFinished && (
+                                <span className="font-bold text-green-400">Hoàn thành: {liveCompletion}%</span>
+                            )}
                             
-                            <span className="font-bold text-blue-400">Độ chính xác: {accuracy}%</span>
+                            <span className="font-bold text-blue-400">Chính xác: {accuracy}%</span>
                             <button onClick={() => setShowStats(true)} className="bg-[#dcfce7] border border-[#22c55e] text-[#166534] px-4 py-1.5 rounded font-bold shadow-sm hover:bg-[#bbf7d0] transition flex items-center gap-2">
                                 📊 Thống kê
                             </button>
@@ -669,10 +753,28 @@
 
                         <div className="absolute top-0 left-0 w-full h-[70%] flex flex-col items-center justify-center z-10">
                             {isFinished ? (
-                                <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-6">
-                                    <h2 className="text-3xl font-bold text-green-600">🎉 Tuyệt vời! Em đã hoàn thành bài tập!</h2>
+                                <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-5 max-w-xl w-11/12 text-center animate-pop-in">
+                                    <h2 className={`text-3xl font-bold ${isTimeout ? 'text-orange-600' : 'text-green-600'}`}>
+                                        {isTimeout ? '⏰ Hết thời gian 10 phút! Đã tự động nộp bài.' : '🎉 Tuyệt vời! Em đã hoàn thành bài tập!'}
+                                    </h2>
+                                    {finalResult && (
+                                        <div className="grid grid-cols-3 gap-4 w-full bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500 font-bold uppercase">Hoàn thành</span>
+                                                <span className="text-2xl font-bold text-purple-600">{finalResult.completion}%</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500 font-bold uppercase">Chính xác</span>
+                                                <span className="text-2xl font-bold text-green-600">{finalResult.accuracy}%</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500 font-bold uppercase">Thời gian</span>
+                                                <span className="text-2xl font-bold text-blue-600">{formatTime(finalResult.timeTaken)}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex gap-4">
-                                        <button onClick={resetLesson} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">🔄 Gõ lại</button>
+                                        <button onClick={() => resetLesson(lesson)} className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl shadow transition text-xl flex items-center gap-2">🔄 Gõ lại</button>
                                         <button onClick={handleNextLesson} className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow transition text-xl flex items-center gap-2">⏭️ Bài tiếp</button>
                                     </div>
                                 </div>
@@ -759,15 +861,17 @@
                                                 <th className="p-4 border-b border-green-200 font-bold">Bài tập</th>
                                                 <th className="p-4 border-b border-green-200 font-bold text-center text-red-600">Số lỗi</th>
                                                 <th className="p-4 border-b border-green-200 font-bold text-center">Chính xác</th>
+                                                <th className="p-4 border-b border-green-200 font-bold text-center text-purple-700">% Hoàn thành</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {displayedStats.length === 0 ? (
-                                                <tr><td colSpan="5" className="p-6 text-center text-gray-500 italic">Chưa có kết quả nào...</td></tr>
+                                                <tr><td colSpan="6" className="p-6 text-center text-gray-500 italic">Chưa có kết quả nào...</td></tr>
                                             ) : (
                                                 displayedStats.map(stat => {
                                                     const acc = stat.accuracy || 0;
-                                                    const isNeedsImprovement = acc < 80;
+                                                    const comp = stat.completion !== undefined ? stat.completion : 100;
+                                                    const isNeedsImprovement = acc < 80 || comp < 100;
                                                     const rowClass = isNeedsImprovement ? "bg-red-50 hover:bg-red-100 border-b border-red-200" : "hover:bg-green-50 border-b border-gray-100";
                                                         
                                                     return (
@@ -776,8 +880,11 @@
                                                             <td className={`p-4 font-bold text-lg ${isNeedsImprovement ? 'text-red-700' : 'text-blue-600'}`}>{stat.playerName || "Khách"}</td>
                                                             <td className="p-4 text-gray-700 text-sm font-medium">{stat.lessonTitle || ""}</td>
                                                             <td className={`p-4 text-center font-bold text-xl ${isNeedsImprovement ? 'text-red-700' : 'text-red-500'}`}>{stat.errors || 0}</td>
-                                                            <td className="p-4 text-center flex flex-col items-center justify-center">
-                                                                <span className={`font-bold text-xl ${isNeedsImprovement ? 'text-red-700' : 'text-green-600'}`}>{acc}%</span>
+                                                            <td className="p-4 text-center">
+                                                                <span className={`font-bold text-xl ${acc < 80 ? 'text-red-700' : 'text-green-600'}`}>{acc}%</span>
+                                                            </td>
+                                                            <td className="p-4 text-center">
+                                                                <span className={`font-bold text-xl ${comp < 100 ? 'text-orange-600' : 'text-purple-700'}`}>{comp}%</span>
                                                             </td>
                                                         </tr>
                                                     );
