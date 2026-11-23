@@ -360,6 +360,13 @@
             }
         };
 
+        // Công thức tính độ chính xác chuẩn: Số phím đúng / (Số phím đúng + Số lỗi) * 100%
+        const calcStandardAccuracy = (correctCount, errorCount) => {
+            const total = correctCount + errorCount;
+            if (total === 0) return 100;
+            return Math.round((correctCount / total) * 100);
+        };
+
         function App() {
             const [playerName, setPlayerName] = React.useState("");
             const [isNameConfirmed, setIsNameConfirmed] = React.useState(false); 
@@ -369,6 +376,7 @@
             const [currentLoop, setCurrentLoop] = React.useState(1);
             const [currentIndex, setCurrentIndex] = React.useState(0);
             
+            const [correctChars, setCorrectChars] = React.useState(0);
             const [errors, setErrors] = React.useState(0);
             const [startTime, setStartTime] = React.useState(null);
             const [isFinished, setIsFinished] = React.useState(false);
@@ -389,11 +397,10 @@
             const currentText = (lesson.texts ? lesson.texts[currentLoop - 1] : lesson.text) || "";
             const maxLoops = lesson.texts ? lesson.texts.length : (lesson.loops || 3);
 
-            // Lưu trạng thái mới nhất vào ref để bộ đếm ngược tự động nộp bài chính xác
             const latestStateRef = React.useRef({});
-            latestStateRef.current = { lesson, currentLoop, currentIndex, errors, playerName, startTime, isFinished };
+            latestStateRef.current = { lesson, currentLoop, currentIndex, correctChars, errors, playerName, startTime, isFinished };
 
-            const submitLesson = React.useCallback((timedOut = false, overrideCompletion = null) => {
+            const submitLesson = React.useCallback((timedOut = false, overrideCompletion = null, overrideCorrect = null) => {
                 const st = latestStateRef.current;
                 if (st.isFinished) return;
 
@@ -405,12 +412,14 @@
                     ? overrideCompletion
                     : calcCompletionPercent(st.lesson, st.currentLoop, st.currentIndex);
 
-                const finalAcc = (completion === 0 && st.errors === 0)
+                const finalCorrect = overrideCorrect !== null ? overrideCorrect : st.correctChars;
+                const finalAcc = (finalCorrect + st.errors === 0)
                     ? 0
-                    : Math.max(0, 100 - (st.errors * 5));
+                    : calcStandardAccuracy(finalCorrect, st.errors);
 
                 setIsFinished(true);
                 setIsTimeout(timedOut);
+                setAccuracy(finalAcc);
                 setFinalResult({ timeTaken, errors: st.errors, accuracy: finalAcc, completion });
 
                 if (db) {
@@ -497,12 +506,16 @@
 
                     if (typedChar === expectedChar) {
                         setHasError(false); 
+                        const nextCorrect = correctChars + 1;
+                        setCorrectChars(nextCorrect);
+                        setAccuracy(calcStandardAccuracy(nextCorrect, errors));
+
                         if (currentIndex + 1 === currentText.length) {
                             if (currentLoop < maxLoops) {
                                 setCurrentLoop(prev => prev + 1);
                                 setCurrentIndex(0);
                             } else {
-                                submitLesson(false, 100);
+                                submitLesson(false, 100, nextCorrect);
                             }
                         } else {
                             setCurrentIndex(prev => prev + 1);
@@ -511,7 +524,7 @@
                         setHasError(true);
                         const nextErrors = errors + 1;
                         setErrors(nextErrors);
-                        setAccuracy(Math.max(0, 100 - (nextErrors * 5)));
+                        setAccuracy(calcStandardAccuracy(correctChars, nextErrors));
                     }
                 };
                 
@@ -525,7 +538,7 @@
                     window.removeEventListener('keydown', handleKeyDown);
                     window.removeEventListener('keyup', handleKeyUp);
                 };
-            }, [currentIndex, isFinished, lesson, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops, submitLesson]);
+            }, [currentIndex, isFinished, lesson, correctChars, errors, startTime, playerName, isNameConfirmed, currentLoop, currentText, maxLoops, submitLesson]);
 
             const handleNameBlur = () => {
                 if (playerName.trim() !== "") {
@@ -550,6 +563,7 @@
             const resetLesson = (targetLesson = lesson) => {
                 setCurrentIndex(0); 
                 setCurrentLoop(1);
+                setCorrectChars(0);
                 setErrors(0); 
                 setAccuracy(100); 
                 setStartTime(null); 
